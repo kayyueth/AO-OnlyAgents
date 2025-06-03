@@ -1,0 +1,21 @@
+[
+  {
+    "id": "log3",
+    "timestamp": "2024-06-01T10:13:00Z",
+    "memoryId": "xyz123",
+    "source": "TEE + AO",
+    "action": "Cross-referenced $XYZ with private signals",
+    "output": "Found correlation with private alert.",
+    "fromAO": true,
+    "fromPrivate": true
+  },
+  {
+    "id": "log4",
+    "timestamp": "2024-06-01T10:16:00Z",
+    "memoryId": "abc456",
+    "source": "AO",
+    "action": "Reviewed $ABC anomaly",
+    "output": "No private data available.",
+    "fromAO": true
+  }
+]
