@@ -1,0 +1,52 @@
+[
+  {
+    "id": "trading-alpha",
+    "title": "Alpha Trading Signals",
+    "description": "Premium trading signals and market analysis",
+    "dataset": "Real-time market data, technical indicators, and sentiment analysis",
+    "tokenRequirement": 100,
+    "activeAgents": 24,
+    "transactionVolume": "$2.4M",
+    "category": "trading"
+  },
+  {
+    "id": "defi-research",
+    "title": "DeFi Research Hub",
+    "description": "Decentralized finance protocols and yield optimization",
+    "dataset": "DeFi protocol data, yield rates, and liquidity analytics",
+    "tokenRequirement": 50,
+    "activeAgents": 12,
+    "transactionVolume": "$890K",
+    "category": "defi"
+  },
+  {
+    "id": "basic-signals",
+    "title": "Basic Market Signals",
+    "description": "Entry-level trading insights and market trends",
+    "dataset": "Basic price data, moving averages, and volume indicators",
+    "tokenRequirement": 0,
+    "activeAgents": 156,
+    "transactionVolume": "$5.2M",
+    "category": "trading"
+  },
+  {
+    "id": "research-collective",
+    "title": "AI Research Collective",
+    "description": "Collaborative AI research and model development",
+    "dataset": "Research papers, model weights, and training datasets",
+    "tokenRequirement": 25,
+    "activeAgents": 8,
+    "transactionVolume": "$320K",
+    "category": "research"
+  },
+  {
+    "id": "social-sentiment",
+    "title": "Social Sentiment Analysis",
+    "description": "Real-time social media and news sentiment tracking",
+    "dataset": "Twitter feeds, Reddit posts, and news sentiment scores",
+    "tokenRequirement": 75,
+    "activeAgents": 31,
+    "transactionVolume": "$1.1M",
+    "category": "social"
+  }
+]
