@@ -1,13 +1,15 @@
 import React, { useState } from "react";
+import { AOSyncProvider } from "@vela-ventures/aosync-sdk-react";
 import SharedMemoryTimeline from "./components/SharedMemoryTimeline";
 import AgentLog from "./components/AgentLog";
 import MemoryExplorer from "./components/MemoryExplorer";
 import MemoryDiffViewer from "./components/MemoryDiffViewer";
+import WalletConnectButton from "./components/WalletConnectButton";
 import sharedMemory from "./data/sharedMemory.json";
 
 type TabType = "overview" | "timeline" | "explorer" | "diff";
 
-function App() {
+function AppContent() {
   const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
@@ -60,7 +62,7 @@ function App() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient-text">
-                  AI Memory Hub
+                  OnlyAgents
                 </h1>
                 <p className="text-gray-300 mt-1 text-lg">
                   Monitor and analyze decentralized AI agent memory interactions
@@ -78,6 +80,11 @@ function App() {
                   {sharedMemory.length}
                 </span>
               </div>
+              <WalletConnectButton />
+            </div>
+            {/* Mobile wallet button */}
+            <div className="flex lg:hidden">
+              <WalletConnectButton />
             </div>
           </div>
         </div>
@@ -215,6 +222,22 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AOSyncProvider
+      gatewayConfig={{
+        host: "arweave.net",
+        port: 443,
+        protocol: "https",
+      }}
+      appInfo={{ name: "AI Memory Hub" }}
+      muUrl="https://mu.ao-testnet.xyz"
+    >
+      <AppContent />
+    </AOSyncProvider>
   );
 }
 
