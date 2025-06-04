@@ -11,7 +11,7 @@ function UserInfoCard({ className = "" }: UserInfoCardProps) {
   // Mock data for demonstration - in a real app, these would come from the SDK or API calls
   const mockUserData = {
     address: "BeaconWalletAddressExample123456789",
-    balance: "1.234 AR",
+    balance: "1.234 AO",
     boundAgent: {
       name: "Trading Agent Alpha",
       processId: "aos_process_123abc456def789",

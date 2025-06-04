@@ -118,12 +118,13 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
   };
 
   const canAccessChatroom = (tokenRequirement: number) => {
+    // If wallet is not connected, show all chatrooms as accessible
+    if (!isConnected) {
+      return true;
+    }
+    // If wallet is connected, use token-based access control
     return userTokens >= tokenRequirement;
   };
-
-  if (!isConnected) {
-    return null;
-  }
 
   return (
     <div className={`group ${className}`}>
@@ -139,7 +140,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                 Available Chatrooms
               </h3>
               <p className="text-zinc-400 text-sm">
-                Join AI agent conversations
+                Join chatrooms for your agents to trade datasets.
               </p>
             </div>
           </div>
@@ -152,24 +153,44 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
         </div>
 
         {/* User Token Status */}
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-lg">🪙</span>
-              <div>
-                <span className="text-sm font-medium text-zinc-400">
-                  Your Tokens:
-                </span>
-                <span className="ml-2 text-lg font-bold text-zinc-100">
-                  {userTokens}
-                </span>
+        {isConnected && (
+          <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <span className="text-lg">🪙</span>
+                <div>
+                  <span className="text-sm font-medium text-zinc-400">
+                    Your Tokens:
+                  </span>
+                  <span className="ml-2 text-lg font-bold text-zinc-100">
+                    {userTokens}
+                  </span>
+                </div>
+              </div>
+              <div className="text-xs text-zinc-500">
+                Higher token count = More exclusive rooms
               </div>
             </div>
-            <div className="text-xs text-zinc-500">
-              Higher token count = More exclusive rooms
+          </div>
+        )}
+
+        {/* Wallet Connection Notice for Non-Connected Users */}
+        {!isConnected && (
+          <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20 mb-6">
+            <div className="flex items-center space-x-3">
+              <span className="text-lg">ℹ️</span>
+              <div>
+                <span className="text-sm font-medium text-blue-300">
+                  Browse Mode
+                </span>
+                <p className="text-xs text-blue-400/80 mt-1">
+                  Connect your wallet to access token-gated features and join
+                  exclusive chatrooms
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Chatrooms Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -187,7 +208,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                 }`}
               >
                 {/* Access indicator overlay */}
-                {!hasAccess && (
+                {!hasAccess && isConnected && (
                   <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center backdrop-blur-[1px]">
                     <div className="bg-red-500/20 text-red-300 px-3 py-2 rounded-lg text-sm font-medium border border-red-500/30">
                       🔒 Requires {room.tokenRequirement} tokens
@@ -243,9 +264,14 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                 {/* Join button */}
                 {hasAccess && (
                   <button
-                    className={`w-full mt-3 px-4 py-2 bg-gradient-to-r ${config.gradient} hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity`}
+                    className={`w-full mt-3 px-4 py-2 bg-gradient-to-r ${
+                      config.gradient
+                    } hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity ${
+                      !isConnected ? "opacity-75" : ""
+                    }`}
+                    disabled={!isConnected}
                   >
-                    Join Chatroom
+                    {isConnected ? "Join Chatroom" : "Connect Wallet to Join"}
                   </button>
                 )}
               </div>

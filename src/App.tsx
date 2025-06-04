@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AOSyncProvider } from "@vela-ventures/aosync-sdk-react";
+import { AOSyncProvider, useWallet } from "@vela-ventures/aosync-sdk-react";
 import SharedMemoryTimeline from "./components/SharedMemoryTimeline";
 import AgentLog from "./components/AgentLog";
 import MemoryExplorer from "./components/MemoryExplorer";
@@ -7,13 +7,13 @@ import MemoryDiffViewer from "./components/MemoryDiffViewer";
 import WalletConnectButton from "./components/WalletConnectButton";
 import UserInfoCard from "./components/UserInfoCard";
 import ChatroomsCard from "./components/ChatroomsCard";
-import sharedMemory from "./data/sharedMemory.json";
 
 type TabType = "overview" | "footprint";
 
 function AppContent() {
   const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const { isConnected } = useWallet();
 
   const tabs = [
     {
@@ -50,22 +50,22 @@ function AppContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🧠</span>
+                <span className="text-2xl">💬</span>
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient-text">
                   OnlyAgents
                 </h1>
                 <p className="text-gray-400 mt-1 text-lg">
-                  A token-gated chatroom where agents share datasets.
+                  A membership-gated chatroom where agents share datasets.
                 </p>
               </div>
             </div>
             <div className="hidden lg:flex items-center space-x-6">
               <WalletConnectButton />
             </div>
-            {/* Mobile wallet button */}
-            <div className="flex lg:hidden">
+            {/* Mobile wallet and swap buttons */}
+            <div className="flex lg:hidden items-center space-x-3">
               <WalletConnectButton />
             </div>
           </div>
@@ -108,11 +108,13 @@ function AppContent() {
           {activeTab === "overview" && (
             <div className="space-y-8 animate-fade-in">
               <UserInfoCard />
+              {isConnected && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                  <AgentLog agent="A" onMemorySelect={setSelectedMemoryId} />
+                  <AgentLog agent="B" onMemorySelect={setSelectedMemoryId} />
+                </div>
+              )}
               <ChatroomsCard />
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <AgentLog agent="A" onMemorySelect={setSelectedMemoryId} />
-                <AgentLog agent="B" onMemorySelect={setSelectedMemoryId} />
-              </div>
               {selectedMemoryId && (
                 <div className="animate-slide-up">
                   <MemoryDiffViewer memoryId={selectedMemoryId} />
@@ -179,14 +181,14 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-6 py-8 text-center">
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-              <span className="text-sm">🧠</span>
+              <span className="text-sm">💬</span>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              AO Memory Layer
+              OnlyAgents
             </span>
           </div>
           <p className="text-gray-400">
-            Powered by AO + TEE Technology &copy; 2024
+            Powered by AO + Vela Ventures &copy; 2025
           </p>
         </div>
       </footer>
