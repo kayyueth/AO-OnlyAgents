@@ -73,37 +73,13 @@ Handlers.add(
     "CreditNotice",
     { Action = "Credit-Notice" },
     function(msg)
-        print("=== CREDIT-NOTICE RECEIVED ===")
-        print("From: " .. (msg.From or "nil"))
-        print("AO_TOKEN_PROCESS: " .. AO_TOKEN_PROCESS)
-        print("Match: " .. tostring(msg.From == AO_TOKEN_PROCESS))
-        
-        -- DEBUG: Show the exact message structure
-        print("=== MESSAGE DEBUG ===")
-        print("msg.Tags: " .. (msg.Tags and "exists" or "nil"))
-        if msg.Tags then
-            print("msg.Tags.Sender: " .. (msg.Tags.Sender or "nil"))
-            print("msg.Tags.Quantity: " .. (msg.Tags.Quantity or "nil"))
-            print("All Tags:")
-            for k, v in pairs(msg.Tags) do
-                print("  " .. k .. ": " .. tostring(v))
-            end
-        end
-        print("=== MESSAGE DEBUG END ===")
-        
         -- ✅ SECURE - Only the token process can send this:
         if msg.From ~= AO_TOKEN_PROCESS then
-            print("Rejected Credit-Notice from unauthorized sender: " .. (msg.From or "unknown"))
             return
         end
         
         local from = msg.Tags.Sender or msg.From
         local quantity = tonumber(msg.Tags.Quantity) or 0
-        
-        print("Payment from: " .. (from or "nil"))
-        print("Quantity: " .. quantity)
-        print("AccessPrice: " .. AccessPrice)
-        print("Qualifies: " .. tostring(quantity >= AccessPrice))
         
         -- Validate payment amount
         if quantity >= AccessPrice then
@@ -114,10 +90,7 @@ Handlers.add(
                 active = true
             }
             
-            print("Added member: " .. from)
-            
             -- Send confirmation to the new member
-            print("Sending JoinResponse to: " .. from)
             Send({
                 Target = from,
                 Action = "JoinResponse",
@@ -126,13 +99,10 @@ Handlers.add(
                 Message = "Successfully joined chatroom",
                 PaidAmount = tostring(quantity)
             })
-            print("JoinResponse sent!")
             
             -- Broadcast to existing members
-            print("Broadcasting to existing members...")
             for member_id, member in pairs(Members) do
                 if member_id ~= from and member.active then
-                    print("Broadcasting to member: " .. member_id)
                     Send({
                         Target = member_id,
                         Action = "MemberJoined",
@@ -142,9 +112,7 @@ Handlers.add(
                     })
                 end
             end
-            print("All broadcasts sent!")
         else
-            print("Insufficient payment")
             -- Insufficient payment - return tokens if any were sent
             if quantity > 0 and AO_TOKEN_PROCESS ~= "ANY" then
                 Send({
@@ -166,7 +134,6 @@ Handlers.add(
                 Sent = tostring(quantity)
             })
         end
-        print("=== CREDIT-NOTICE END ===")
     end
 )
 
@@ -238,11 +205,12 @@ Handlers.add(
                 ao.send({
                     Target = member_id,
                     Action = "NewDataAvailable",
-                    Data = "[New Data] " .. dataType .. " data from " .. sender,
+                    Data = data,
                     DataId = id,
                     DataType = dataType,
                     Source = source,
-                    Sender = sender
+                    Sender = sender,
+                    Summary = "[New Data] " .. dataType .. " data from " .. sender
                 })
             end
         end

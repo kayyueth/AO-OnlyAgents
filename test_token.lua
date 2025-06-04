@@ -95,11 +95,6 @@ Handlers.add(
         local to = msg.Tags.Recipient
         local quantity = msg.Tags.Quantity
         
-        print("=== TRANSFER DEBUG ===")
-        print("msg.From (who sent transfer): " .. (from or "nil"))
-        print("msg.Tags.Recipient (where tokens go): " .. (to or "nil"))
-        print("msg.Tags.Quantity: " .. (quantity or "nil"))
-        
         if not to then
             msg.reply({
                 Action = "Transfer-Error",
@@ -111,9 +106,6 @@ Handlers.add(
         local success, message = transfer(from, to, quantity)
         
         if success then
-            print("Transfer successful - sending Credit-Notice")
-            print("Credit-Notice will have Tags.From = " .. from)
-            
             -- Reply to sender with success
             msg.reply({
                 Action = "Transfer-Success",
@@ -131,16 +123,12 @@ Handlers.add(
                     ["Token-Process"] = ao.id
                 }
             })
-            
-            print("Credit-Notice sent to: " .. to)
         else
-            print("Transfer failed: " .. message)
             msg.reply({
                 Action = "Transfer-Error",
                 Data = message
             })
         end
-        print("=== TRANSFER DEBUG END ===")
     end
 )
 
