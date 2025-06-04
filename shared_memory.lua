@@ -33,8 +33,8 @@ Handlers.add(
     function(msg)
         local sender = msg.From
         
-        -- Check if already a member
-        if Members[sender] then
+        -- Check if already an ACTIVE member
+        if Members[sender] and Members[sender].active then
             msg.reply({
                 Action = "JoinResponse",
                 Data = "[Already Joined] Welcome back!",
@@ -44,7 +44,20 @@ Handlers.add(
             return
         end
         
-        -- Request payment from the user
+        -- If member exists but is inactive, they need to pay again
+        if Members[sender] and not Members[sender].active then
+            msg.reply({
+                Action = "PaymentRequired",
+                Data = "[Payment Required] You left the chatroom. Please send " .. AccessPrice .. " AO tokens to rejoin.",
+                Status = "PaymentRequired",
+                Amount = tostring(AccessPrice),
+                TokenProcess = AO_TOKEN_PROCESS,
+                Message = "Rejoining after leaving"
+            })
+            return
+        end
+        
+        -- New member - request payment
         msg.reply({
             Action = "PaymentRequired",
             Data = "[Payment Required] Please send " .. AccessPrice .. " AO tokens to join.",
@@ -60,8 +73,37 @@ Handlers.add(
     "CreditNotice",
     { Action = "Credit-Notice" },
     function(msg)
-        local from = msg.Tags.From or msg.From
+        print("=== CREDIT-NOTICE RECEIVED ===")
+        print("From: " .. (msg.From or "nil"))
+        print("AO_TOKEN_PROCESS: " .. AO_TOKEN_PROCESS)
+        print("Match: " .. tostring(msg.From == AO_TOKEN_PROCESS))
+        
+        -- DEBUG: Show the exact message structure
+        print("=== MESSAGE DEBUG ===")
+        print("msg.Tags: " .. (msg.Tags and "exists" or "nil"))
+        if msg.Tags then
+            print("msg.Tags.From: " .. (msg.Tags.From or "nil"))
+            print("msg.Tags.Quantity: " .. (msg.Tags.Quantity or "nil"))
+            print("All Tags:")
+            for k, v in pairs(msg.Tags) do
+                print("  " .. k .. ": " .. tostring(v))
+            end
+        end
+        print("=== MESSAGE DEBUG END ===")
+        
+        -- ✅ SECURE - Only the token process can send this:
+        if msg.From ~= AO_TOKEN_PROCESS then
+            print("Rejected Credit-Notice from unauthorized sender: " .. (msg.From or "unknown"))
+            return
+        end
+        
+        local from = msg.Tags.Sender or msg.From
         local quantity = tonumber(msg.Tags.Quantity) or 0
+        
+        print("Payment from: " .. (from or "nil"))
+        print("Quantity: " .. quantity)
+        print("AccessPrice: " .. AccessPrice)
+        print("Qualifies: " .. tostring(quantity >= AccessPrice))
         
         -- Validate payment amount
         if quantity >= AccessPrice then
@@ -72,8 +114,10 @@ Handlers.add(
                 active = true
             }
             
+            print("Added member: " .. from)
+            
             -- Send confirmation to the new member
-            ao.send({
+            Send({
                 Target = from,
                 Action = "JoinResponse",
                 Data = "[Access Granted] Welcome to the AO data sharing chatroom!",
@@ -85,7 +129,7 @@ Handlers.add(
             -- Broadcast to existing members
             for member_id, _ in pairs(Members) do
                 if member_id ~= from then
-                    ao.send({
+                    Send({
                         Target = member_id,
                         Action = "MemberJoined",
                         Data = "[New Member] " .. from .. " joined the chatroom",
@@ -95,17 +139,20 @@ Handlers.add(
                 end
             end
         else
+            print("Insufficient payment")
             -- Insufficient payment - return tokens if any were sent
-            if quantity > 0 then
-                ao.send({
+            if quantity > 0 and AO_TOKEN_PROCESS ~= "ANY" then
+                Send({
                     Target = AO_TOKEN_PROCESS,
                     Action = "Transfer",
-                    Recipient = from,
-                    Quantity = tostring(quantity)
+                    Tags = {
+                        Recipient = from,
+                        Quantity = tostring(quantity)
+                    }
                 })
             end
             
-            ao.send({
+            Send({
                 Target = from,
                 Action = "PaymentInsufficient",
                 Data = "[Payment Insufficient] Requires " .. AccessPrice .. " tokens. Sent: " .. quantity,
@@ -114,6 +161,7 @@ Handlers.add(
                 Sent = tostring(quantity)
             })
         end
+        print("=== CREDIT-NOTICE END ===")
     end
 )
 
@@ -344,28 +392,6 @@ Handlers.add(
     end
 )
 
--- Handle the older receive function pattern for compatibility
-if receive then
-    local old_receive = receive
-    receive = function(message)
-        -- Try new handler system first
-        if Handlers and Handlers.evaluate then
-            Handlers.evaluate(message, ao.env)
-        else
-            -- Fallback to old system
-            old_receive(message)
-        end
-    end
-end
 
--- Check if you received ANY Credit-Notice
-print("Checking inbox for Credit-Notice...")
-for i, msg in ipairs(Inbox) do
-    print("Message " .. i .. ": " .. (msg.Action or "no action"))
-    if msg.Action == "Credit-Notice" then
-        print("  FOUND Credit-Notice!")
-        print("  From: " .. (msg.From or "none"))
-        print("  Tags.From: " .. (msg.Tags and msg.Tags.From or "none")) 
-        print("  Tags.Quantity: " .. (msg.Tags and msg.Tags.Quantity or "none"))
-    end
-end
+
+
