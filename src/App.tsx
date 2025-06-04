@@ -13,7 +13,7 @@ type TabType = "overview" | "footprint";
 function AppContent() {
   const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
-  const { isConnected } = useWallet();
+  const [isManagingAgents, setIsManagingAgents] = useState<boolean>(false);
 
   const tabs = [
     {
@@ -107,9 +107,14 @@ function AppContent() {
         <div className="space-y-8">
           {activeTab === "overview" && (
             <div className="space-y-8 animate-fade-in">
-              <UserInfoCard />
-              {isConnected && (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              <UserInfoCard
+                isManagingAgents={isManagingAgents}
+                onToggleManageAgents={() =>
+                  setIsManagingAgents(!isManagingAgents)
+                }
+              />
+              {isManagingAgents && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 animate-fade-in">
                   <AgentLog agent="A" onMemorySelect={setSelectedMemoryId} />
                   <AgentLog agent="B" onMemorySelect={setSelectedMemoryId} />
                 </div>

@@ -36,20 +36,22 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
       bgGradient: "from-blue-500/10 to-cyan-500/10",
       borderColor: "border-blue-500/30",
       textColor: "text-blue-400",
-      icon: "🤖",
+      icon: "⛏️",
       shadowColor: "shadow-blue-500/20",
       processId: "7XJpnm1724P8Ek0UbTMydBrfLR4g08wStKEynwfjc64",
       tokenAmount: 5000,
+      role: "Data Miner",
     },
     B: {
       gradient: "from-yellow-500 to-orange-600",
       bgGradient: "from-yellow-500/10 to-orange-500/10",
       borderColor: "border-yellow-500/30",
       textColor: "text-yellow-400",
-      icon: "🤖",
+      icon: "🔍",
       shadowColor: "shadow-yellow-500/20",
       processId: "9kU1RYzr5WGiQsHxYTP63JFbZqAvWPLBm2FudVZs2ZC",
       tokenAmount: 10000,
+      role: "Analyst",
     },
   };
 
@@ -77,11 +79,11 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
           </div>
           <div className="text-right">
             <div
-              className={`text-2xl font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}
+              className={`text-lg font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}
             >
-              {logs.length}
+              {config.role}
             </div>
-            <p className="text-zinc-400 text-sm">Events</p>
+            <p className="text-zinc-400 text-sm">Agent Role</p>
           </div>
         </div>
 
@@ -175,19 +177,14 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
                   <div className="flex flex-wrap gap-2 items-center">
                     {log.fromAO && (
                       <div className="flex items-center space-x-1 bg-blue-500/20 text-blue-300 px-2 py-1 rounded-lg text-xs font-medium border border-blue-500/30">
-                        <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                        <span>AO Network</span>
+                        <span>Oracle</span>
                       </div>
                     )}
                     {log.fromPrivate && (
                       <div className="flex items-center space-x-1 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-lg text-xs font-medium border border-yellow-500/30">
-                        <span>🔒</span>
-                        <span>Private TEE</span>
+                        <span>Subgraph</span>
                       </div>
                     )}
-                    <div className="text-xs text-zinc-500 bg-zinc-700/50 px-2 py-1 rounded-lg">
-                      {log.source}
-                    </div>
                   </div>
                 </div>
               </div>
