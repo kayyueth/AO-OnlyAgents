@@ -125,9 +125,6 @@ function UserInfoCard({
             <div className="mb-0">
               <div className="text-sm font-semibold text-zinc-200 mb-2 flex items-center space-x-2">
                 <span>{mockUserData.boundAgentB.name}</span>
-                <div className="flex items-center space-x-1 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs border border-yellow-500/30">
-                  <span>PROCESS ID</span>
-                </div>
               </div>
               <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-3 py-2 border border-zinc-700/50 break-all">
                 {mockUserData.boundAgentB.processId}
