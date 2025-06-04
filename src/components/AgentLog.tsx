@@ -38,6 +38,8 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
       textColor: "text-blue-400",
       icon: "🤖",
       shadowColor: "shadow-blue-500/20",
+      processId: "7XJpnm1724P8Ek0UbTMydBrfLR4g08wStKEynwfjc64",
+      tokenAmount: 5000,
     },
     B: {
       gradient: "from-yellow-500 to-orange-600",
@@ -46,6 +48,8 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
       textColor: "text-yellow-400",
       icon: "🤖",
       shadowColor: "shadow-yellow-500/20",
+      processId: "9kU1RYzr5WGiQsHxYTP63JFbZqAvWPLBm2FudVZs2ZC",
+      tokenAmount: 10000,
     },
   };
 
@@ -84,22 +88,23 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
         {/* Activity Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-            <div className="text-lg font-bold text-zinc-100">
-              {logs.filter((log) => log.fromAO).length}
+            <div
+              className="text-lg font-bold text-zinc-100 truncate"
+              title={config.processId}
+            >
+              {config.processId.slice(0, 8)}...
             </div>
-            <div className="text-xs text-zinc-400">AO Network</div>
+            <div className="text-xs text-zinc-400">Process ID</div>
+          </div>
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+            <div className="text-lg font-bold text-zinc-100">{logs.length}</div>
+            <div className="text-xs text-zinc-400"># of Messages</div>
           </div>
           <div className="bg-white/5 rounded-xl p-3 border border-white/10">
             <div className="text-lg font-bold text-zinc-100">
-              {logs.filter((log) => log.fromPrivate).length}
+              {config.tokenAmount.toLocaleString()}
             </div>
-            <div className="text-xs text-zinc-400">Private TEE</div>
-          </div>
-          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-            <div className="text-lg font-bold text-zinc-100">
-              {logs.filter((log) => log.memoryId).length}
-            </div>
-            <div className="text-xs text-zinc-400">Memory Links</div>
+            <div className="text-xs text-zinc-400">Token Amount</div>
           </div>
         </div>
 
