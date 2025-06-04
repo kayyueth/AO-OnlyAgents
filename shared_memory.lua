@@ -82,7 +82,7 @@ Handlers.add(
         print("=== MESSAGE DEBUG ===")
         print("msg.Tags: " .. (msg.Tags and "exists" or "nil"))
         if msg.Tags then
-            print("msg.Tags.From: " .. (msg.Tags.From or "nil"))
+            print("msg.Tags.Sender: " .. (msg.Tags.Sender or "nil"))
             print("msg.Tags.Quantity: " .. (msg.Tags.Quantity or "nil"))
             print("All Tags:")
             for k, v in pairs(msg.Tags) do
@@ -117,6 +117,7 @@ Handlers.add(
             print("Added member: " .. from)
             
             -- Send confirmation to the new member
+            print("Sending JoinResponse to: " .. from)
             Send({
                 Target = from,
                 Action = "JoinResponse",
@@ -125,10 +126,13 @@ Handlers.add(
                 Message = "Successfully joined chatroom",
                 PaidAmount = tostring(quantity)
             })
+            print("JoinResponse sent!")
             
             -- Broadcast to existing members
-            for member_id, _ in pairs(Members) do
-                if member_id ~= from then
+            print("Broadcasting to existing members...")
+            for member_id, member in pairs(Members) do
+                if member_id ~= from and member.active then
+                    print("Broadcasting to member: " .. member_id)
                     Send({
                         Target = member_id,
                         Action = "MemberJoined",
@@ -138,6 +142,7 @@ Handlers.add(
                     })
                 end
             end
+            print("All broadcasts sent!")
         else
             print("Insufficient payment")
             -- Insufficient payment - return tokens if any were sent
