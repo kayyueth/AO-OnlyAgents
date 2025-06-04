@@ -26,12 +26,18 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
   const [loading, setLoading] = useState(true);
   const [joiningRoom, setJoiningRoom] = useState<string | null>(null);
   const [posterData, setPosterData] = useState<{ processId: string; title: string } | null>(null);
+  const [lastConnectedState, setLastConnectedState] = useState<boolean>(false);
 
   // Mock user token count - in real app, this would come from the UserInfoCard or SDK
   const userTokens = 0; // This matches the default from UserInfoCard
 
   // Initialize service with wallet and load chatrooms
   useEffect(() => {
+    // Only run if connection status actually changed
+    if (isConnected === lastConnectedState && chatrooms.length > 0) {
+      return;
+    }
+
     const loadChatrooms = async () => {
       setLoading(true);
       try {
@@ -44,6 +50,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
         const mockChatrooms = chatroomsData as Chatroom[];
         const enhancedChatrooms = await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
         setChatrooms(enhancedChatrooms);
+        setLastConnectedState(isConnected);
       } catch (error) {
         console.error('Error loading chatrooms:', error);
         // Fallback to mock data
@@ -53,8 +60,9 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
       }
     };
 
+    console.log(`Loading chatrooms - isConnected: ${isConnected}, lastConnectedState: ${lastConnectedState}`);
     loadChatrooms();
-  }, [isConnected, walletContext]);
+  }, [isConnected]); // Remove walletContext from dependencies to prevent infinite re-renders
 
   const handleJoinChatroom = async (room: ExtendedChatroom) => {
     if (!room.processId) {
