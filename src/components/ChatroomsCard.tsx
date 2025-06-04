@@ -295,8 +295,8 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                         )}
                         {/* Show process ID for user's specific chatroom */}
                         {room.processId === 'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY' && (
-                          <div className="text-xs text-yellow-300 mt-1 font-mono">
-                            🎯 YOUR PROCESS: {room.processId.slice(0, 12)}...{room.processId.slice(-8)}
+                          <div className="text-xs text-yellow-300 mt-1 font-mono break-all">
+                            🎯 YOUR PROCESS: {room.processId}
                           </div>
                         )}
                       </div>
@@ -305,10 +305,13 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                     {/* Enhanced real process indicator */}
                     {room.isReal && room.processId && (
                       <div className="mt-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                        <div className="text-xs text-blue-400 font-mono mt-1">
+                        <div className="text-xs text-blue-300 font-medium">
+                          🔗 Connected to AO Process
+                        </div>
+                        <div className="text-xs text-blue-400 font-mono mt-1 break-all">
                           {room.processId === 'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY' ? (
-                            <span className="text-blue-400">
-                              PROCESS ID: {room.processId}
+                            <span className="text-yellow-300 font-bold">
+                              🎯 YOUR PROCESS: {room.processId}
                             </span>
                           ) : (
                             `Process: ${room.processId.slice(0, 12)}...`

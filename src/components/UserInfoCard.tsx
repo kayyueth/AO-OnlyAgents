@@ -14,7 +14,7 @@ function UserInfoCard({ className = "" }: UserInfoCardProps) {
     balance: "1.234 AO",
     boundAgent: {
       name: "Trading Agent Alpha",
-      processId: "aos_process_123abc456def789",
+      processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
     },
     tokenCount: 0,
   };
