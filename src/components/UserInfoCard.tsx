@@ -20,9 +20,13 @@ function UserInfoCard({
   const mockUserData = {
     address: "BeaconWalletAddressExample123456789",
     balance: "1.234 AO",
-    boundAgent: {
+    boundAgentA: {
       name: "Trading Agent Alpha",
       processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
+    },
+    boundAgentB: {
+      name: "Data Agent Beta",
+      processId: "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY",
     },
     tokenCount: 10000,
   };
@@ -93,26 +97,47 @@ function UserInfoCard({
           </div>
 
           {/* Bound AO Agent */}
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <div className="flex items-center space-x-2 mb-2">
+          <div className="bg-white/5 rounded-xl p-4 border border-white/10 col-span-1 md:col-span-2">
+            <div className="flex items-center space-x-2 mb-3">
               <span className="text-lg">🤖</span>
               <span className="text-sm font-medium text-zinc-400">
-                Bound Agent
+                Bound Agents
               </span>
             </div>
-            <div className="flex">
-              <div className="text-sm font-semibold text-zinc-200 mb-1">
+            
+            {/* Agent A */}
+            <div className="mb-4 last:mb-0">
+              <div className="text-sm font-semibold text-zinc-200 mb-2">
                 {mockUserData.boundAgentA.name}
               </div>
-              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 ml-2 border border-zinc-700/50">
-                {truncateAddress(mockUserData.boundAgentA.processId)}
+              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-3 py-2 border border-zinc-700/50 break-all">
+                {mockUserData.boundAgentA.processId}
               </div>
-              <div className="text-sm font-semibold text-zinc-200 mb-1 ml-6">
-                {mockUserData.boundAgentB.name}
+              <button
+                onClick={() => navigator.clipboard.writeText(mockUserData.boundAgentA.processId)}
+                className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors"
+              >
+                Click to copy process ID
+              </button>
+            </div>
+
+            {/* Agent B */}
+            <div className="mb-0">
+              <div className="text-sm font-semibold text-zinc-200 mb-2 flex items-center space-x-2">
+                <span>{mockUserData.boundAgentB.name}</span>
+                <div className="flex items-center space-x-1 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs border border-yellow-500/30">
+                  <span>PROCESS ID</span>
+                </div>
               </div>
-              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 ml-2 border border-zinc-700/50">
-                {truncateAddress(mockUserData.boundAgentB.processId)}
+              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-3 py-2 border border-zinc-700/50 break-all">
+                {mockUserData.boundAgentB.processId}
               </div>
+              <button
+                onClick={() => navigator.clipboard.writeText(mockUserData.boundAgentB.processId)}
+                className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors"
+              >
+                Click to copy process ID
+              </button>
             </div>
           </div>
 
