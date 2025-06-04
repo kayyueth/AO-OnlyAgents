@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useWallet } from "@vela-ventures/aosync-sdk-react";
+import chatroomsData from "../data/chatroom.json";
+import { chatroomService, ExtendedChatroom } from "../services/chatroomService";
+import ChatroomDataPoster from "./ChatroomDataPoster";
 
 interface Chatroom {
   id: string;
@@ -17,65 +20,70 @@ interface ChatroomsCardProps {
 }
 
 function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
-  const { isConnected } = useWallet();
+  const walletContext = useWallet();
+  const { isConnected } = walletContext;
+  const [chatrooms, setChatrooms] = useState<ExtendedChatroom[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [joiningRoom, setJoiningRoom] = useState<string | null>(null);
+  const [posterData, setPosterData] = useState<{ processId: string; title: string } | null>(null);
 
   // Mock user token count - in real app, this would come from the UserInfoCard or SDK
   const userTokens = 0; // This matches the default from UserInfoCard
 
-  // Mock chatrooms data
-  const chatrooms: Chatroom[] = [
-    {
-      id: "trading-alpha",
-      title: "Alpha Trading Signals",
-      description: "Premium trading signals and market analysis",
-      dataset:
-        "Real-time market data, technical indicators, and sentiment analysis",
-      tokenRequirement: 100,
-      activeAgents: 24,
-      transactionVolume: "$2.4M",
-      category: "trading",
-    },
-    {
-      id: "defi-research",
-      title: "DeFi Research Hub",
-      description: "Decentralized finance protocols and yield optimization",
-      dataset: "DeFi protocol data, yield rates, and liquidity analytics",
-      tokenRequirement: 50,
-      activeAgents: 12,
-      transactionVolume: "$890K",
-      category: "defi",
-    },
-    {
-      id: "basic-signals",
-      title: "Basic Market Signals",
-      description: "Entry-level trading insights and market trends",
-      dataset: "Basic price data, moving averages, and volume indicators",
-      tokenRequirement: 0,
-      activeAgents: 156,
-      transactionVolume: "$5.2M",
-      category: "trading",
-    },
-    {
-      id: "research-collective",
-      title: "AI Research Collective",
-      description: "Collaborative AI research and model development",
-      dataset: "Research papers, model weights, and training datasets",
-      tokenRequirement: 25,
-      activeAgents: 8,
-      transactionVolume: "$320K",
-      category: "research",
-    },
-    {
-      id: "social-sentiment",
-      title: "Social Sentiment Analysis",
-      description: "Real-time social media and news sentiment tracking",
-      dataset: "Twitter feeds, Reddit posts, and news sentiment scores",
-      tokenRequirement: 75,
-      activeAgents: 31,
-      transactionVolume: "$1.1M",
-      category: "social",
-    },
-  ];
+  // Initialize service with wallet and load chatrooms
+  useEffect(() => {
+    const loadChatrooms = async () => {
+      setLoading(true);
+      try {
+        // Set wallet context in service if connected
+        if (isConnected) {
+          chatroomService.setWallet(walletContext);
+        }
+
+        // Enhance mock data with real AO data
+        const mockChatrooms = chatroomsData as Chatroom[];
+        const enhancedChatrooms = await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
+        setChatrooms(enhancedChatrooms);
+      } catch (error) {
+        console.error('Error loading chatrooms:', error);
+        // Fallback to mock data
+        setChatrooms(chatroomsData as ExtendedChatroom[]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChatrooms();
+  }, [isConnected, walletContext]);
+
+  const handleJoinChatroom = async (room: ExtendedChatroom) => {
+    if (!room.processId) {
+      alert('This is a mock chatroom. Real chatroom functionality coming soon!');
+      return;
+    }
+
+    setJoiningRoom(room.id);
+    try {
+      const result = await chatroomService.joinChatroom(room.processId);
+      
+      if (result.success) {
+        alert(`Successfully joined ${room.title}!`);
+        // Refresh chatroom data
+        const mockChatrooms = chatroomsData as Chatroom[];
+        const enhancedChatrooms = await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
+        setChatrooms(enhancedChatrooms);
+      } else if (result.paymentRequired) {
+        alert(`Payment required: ${result.message}`);
+      } else {
+        alert(`Failed to join: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error joining chatroom:', error);
+      alert('Error joining chatroom. Please try again.');
+    } finally {
+      setJoiningRoom(null);
+    }
+  };
 
   const getCategoryConfig = (category: string) => {
     switch (category) {
@@ -193,91 +201,181 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
         )}
 
         {/* Chatrooms Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {chatrooms.map((room) => {
-            const config = getCategoryConfig(room.category);
-            const hasAccess = canAccessChatroom(room.tokenRequirement);
-
-            return (
-              <div
-                key={room.id}
-                className={`relative bg-white/5 rounded-xl p-4 border border-white/10 transition-all duration-300 ${
-                  hasAccess
-                    ? "hover:bg-white/10 hover:border-white/20 hover:shadow-lg cursor-pointer hover:scale-[1.02]"
-                    : "opacity-50 cursor-not-allowed"
-                }`}
-              >
-                {/* Access indicator overlay */}
-                {!hasAccess && isConnected && (
-                  <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center backdrop-blur-[1px]">
-                    <div className="bg-red-500/20 text-red-300 px-3 py-2 rounded-lg text-sm font-medium border border-red-500/30">
-                      🔒 Requires {room.tokenRequirement} tokens
-                    </div>
-                  </div>
-                )}
-
-                {/* Category header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">{config.icon}</span>
-                    <div
-                      className={`px-2 py-1 rounded-lg text-xs font-medium bg-gradient-to-r ${config.bgGradient} border ${config.borderColor}`}
-                    >
-                      {room.category.toUpperCase()}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-xs text-zinc-500">
-                    <span>🪙</span>
-                    <span>{room.tokenRequirement}</span>
-                  </div>
-                </div>
-
-                {/* Room info */}
-                <div className="mb-4">
-                  <h4
-                    className={`text-lg font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent mb-2`}
-                  >
-                    {room.title}
-                  </h4>
-                  <p className="text-sm text-zinc-300 mb-2">
-                    {room.description}
-                  </p>
-                  <p className="text-xs text-zinc-500 italic">{room.dataset}</p>
-                </div>
-
-                {/* Stats */}
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10 animate-pulse">
+                <div className="h-4 bg-white/10 rounded mb-3"></div>
+                <div className="h-6 bg-white/10 rounded mb-2"></div>
+                <div className="h-3 bg-white/10 rounded mb-4"></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/5 rounded-lg p-2 border border-white/10">
-                    <div className="text-xs text-zinc-400">Active Agents</div>
-                    <div className="text-lg font-bold text-zinc-100">
-                      {room.activeAgents}
-                    </div>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2 border border-white/10">
-                    <div className="text-xs text-zinc-400">Volume (24h)</div>
-                    <div className="text-lg font-bold text-zinc-100">
-                      {room.transactionVolume}
-                    </div>
-                  </div>
+                  <div className="h-12 bg-white/10 rounded"></div>
+                  <div className="h-12 bg-white/10 rounded"></div>
                 </div>
-
-                {/* Join button */}
-                {hasAccess && (
-                  <button
-                    className={`w-full mt-3 px-4 py-2 bg-gradient-to-r ${
-                      config.gradient
-                    } hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity ${
-                      !isConnected ? "opacity-75" : ""
-                    }`}
-                    disabled={!isConnected}
-                  >
-                    {isConnected ? "Join Chatroom" : "Connect Wallet to Join"}
-                  </button>
-                )}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {chatrooms.map((room) => {
+              const config = getCategoryConfig(room.category);
+              const hasAccess = canAccessChatroom(room.tokenRequirement);
+              const isJoining = joiningRoom === room.id;
+
+              return (
+                <div
+                  key={room.id}
+                  className={`relative bg-white/5 rounded-xl p-4 border border-white/10 transition-all duration-300 ${
+                    hasAccess
+                      ? "hover:bg-white/10 hover:border-white/20 hover:shadow-lg cursor-pointer hover:scale-[1.02]"
+                      : "opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  {/* Access indicator overlay */}
+                  {!hasAccess && isConnected && (
+                    <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center backdrop-blur-[1px]">
+                      <div className="bg-red-500/20 text-red-300 px-3 py-2 rounded-lg text-sm font-medium border border-red-500/30">
+                        🔒 Requires {room.tokenRequirement} tokens
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Real/Mock indicator */}
+                  <div className="absolute top-3 right-3">
+                    {room.isReal ? (
+                      <div className="flex items-center space-x-1 bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs border border-green-500/30">
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                        <span>LIVE</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1 bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full text-xs border border-gray-500/30">
+                        <span>DEMO</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{config.icon}</span>
+                      <div
+                        className={`px-2 py-1 rounded-lg text-xs font-medium bg-gradient-to-r ${config.bgGradient} border ${config.borderColor}`}
+                      >
+                        {room.category.toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1 text-xs text-zinc-500 mr-16">
+                      <span>🪙</span>
+                      <span>{room.tokenRequirement}</span>
+                    </div>
+                  </div>
+
+                  {/* Room info */}
+                  <div className="mb-4">
+                    <h4
+                      className={`text-lg font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent mb-2`}
+                    >
+                      {room.title}
+                    </h4>
+                    <p className="text-sm text-zinc-300 mb-2">
+                      {room.description}
+                    </p>
+                    <p className="text-xs text-zinc-500 italic">{room.dataset}</p>
+                    
+                    {/* Real chatroom data indicator */}
+                    {room.isReal && room.realData && (
+                      <div className="mt-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                        <div className="text-xs text-green-300 font-medium">
+                          📊 Real AO Data: {room.realData.dataCount} messages, {room.realData.memberCount} members
+                        </div>
+                        {room.messages && room.messages.length > 0 && (
+                          <div className="text-xs text-green-400 mt-1">
+                            Latest: {room.messages[0].dataType} from {room.messages[0].sender.slice(0, 8)}...
+                          </div>
+                        )}
+                        {/* Show process ID for user's specific chatroom */}
+                        {room.processId === 'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY' && (
+                          <div className="text-xs text-yellow-300 mt-1 font-mono">
+                            🎯 YOUR PROCESS: {room.processId.slice(0, 12)}...{room.processId.slice(-8)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Enhanced real process indicator */}
+                    {room.isReal && room.processId && (
+                      <div className="mt-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                        <div className="text-xs text-blue-400 font-mono mt-1">
+                          {room.processId === 'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY' ? (
+                            <span className="text-blue-400">
+                              PROCESS ID: {room.processId}
+                            </span>
+                          ) : (
+                            `Process: ${room.processId.slice(0, 12)}...`
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/5 rounded-lg p-2 border border-white/10">
+                      <div className="text-xs text-zinc-400">Active Agents</div>
+                      <div className="text-lg font-bold text-zinc-100 flex items-center space-x-1">
+                        <span>{room.activeAgents}</span>
+                        {room.isReal && <span className="text-xs text-green-400">🔄</span>}
+                      </div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2 border border-white/10">
+                      <div className="text-xs text-zinc-400">Volume (24h)</div>
+                      <div className="text-lg font-bold text-zinc-100">
+                        {room.transactionVolume}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Join button */}
+                  {hasAccess && (
+                    <div className="space-y-2 mt-4">
+                      <button
+                        className={`w-full px-4 py-2 bg-gradient-to-r ${
+                          config.gradient
+                        } hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity ${
+                          !isConnected || isJoining ? "opacity-75" : ""
+                        } ${isJoining ? "cursor-not-allowed" : ""}`}
+                        disabled={!isConnected || isJoining}
+                        onClick={() => handleJoinChatroom(room)}
+                      >
+                        {isJoining ? (
+                          <div className="flex items-center justify-center space-x-2">
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span>Joining...</span>
+                          </div>
+                        ) : room.isReal ? (
+                          isConnected ? "Join AO Chatroom" : "Connect Wallet to Join"
+                        ) : (
+                          "View Demo Room"
+                        )}
+                      </button>
+                      
+                      {/* Post Data button for real chatrooms */}
+                      {room.isReal && room.processId && isConnected && (
+                        <button
+                          className="w-full px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-zinc-300 text-sm font-medium transition-colors"
+                          onClick={() => setPosterData({ processId: room.processId!, title: room.title })}
+                        >
+                          📤 Post Data
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Footer note */}
         <div className="mt-6 pt-4 border-t border-white/10 text-center">
@@ -287,6 +385,15 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
           </p>
         </div>
       </div>
+      
+      {/* ChatroomDataPoster Modal */}
+      {posterData && (
+        <ChatroomDataPoster
+          processId={posterData.processId}
+          chatroomTitle={posterData.title}
+          onClose={() => setPosterData(null)}
+        />
+      )}
     </div>
   );
 }
