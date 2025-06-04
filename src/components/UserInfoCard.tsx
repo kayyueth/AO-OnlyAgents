@@ -1,12 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { useWallet } from "@vela-ventures/aosync-sdk-react";
+import AnalyticsModal from "./AnalyticsModal";
 
 interface UserInfoCardProps {
   className?: string;
+  isManagingAgents?: boolean;
+  onToggleManageAgents?: () => void;
 }
 
-function UserInfoCard({ className = "" }: UserInfoCardProps) {
+function UserInfoCard({
+  className = "",
+  isManagingAgents = false,
+  onToggleManageAgents,
+}: UserInfoCardProps) {
   const { isConnected } = useWallet();
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
   // Mock data for demonstration - in a real app, these would come from the SDK or API calls
   const mockUserData = {
@@ -16,7 +24,7 @@ function UserInfoCard({ className = "" }: UserInfoCardProps) {
       name: "Trading Agent Alpha",
       processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
     },
-    tokenCount: 0,
+    tokenCount: 10000,
   };
 
   const truncateAddress = (addr: string) => {
@@ -92,11 +100,19 @@ function UserInfoCard({ className = "" }: UserInfoCardProps) {
                 Bound Agent
               </span>
             </div>
-            <div className="text-sm font-semibold text-zinc-200 mb-1">
-              {mockUserData.boundAgent.name}
-            </div>
-            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50">
-              {truncateAddress(mockUserData.boundAgent.processId)}
+            <div className="flex">
+              <div className="text-sm font-semibold text-zinc-200 mb-1">
+                {mockUserData.boundAgentA.name}
+              </div>
+              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 ml-2 border border-zinc-700/50">
+                {truncateAddress(mockUserData.boundAgentA.processId)}
+              </div>
+              <div className="text-sm font-semibold text-zinc-200 mb-1 ml-6">
+                {mockUserData.boundAgentB.name}
+              </div>
+              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 ml-2 border border-zinc-700/50">
+                {truncateAddress(mockUserData.boundAgentB.processId)}
+              </div>
             </div>
           </div>
 
@@ -104,9 +120,7 @@ function UserInfoCard({ className = "" }: UserInfoCardProps) {
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-lg">🪙</span>
-              <span className="text-sm font-medium text-zinc-400">
-                Agent Tokens
-              </span>
+              <span className="text-sm font-medium text-zinc-400">Tokens</span>
             </div>
             <div className="text-xl font-bold text-zinc-100">
               {mockUserData.tokenCount.toLocaleString()}
@@ -121,16 +135,31 @@ function UserInfoCard({ className = "" }: UserInfoCardProps) {
             <span>🔄</span>
             <span>Refresh Data</span>
           </button>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg text-sm font-medium hover:bg-purple-500/30 transition-colors border border-purple-500/30">
-            <span>⚙️</span>
-            <span>Manage Agent</span>
+          <button
+            onClick={onToggleManageAgents}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+              isManagingAgents
+                ? "bg-purple-500/30 text-purple-200 border-purple-500/50 hover:bg-purple-500/40"
+                : "bg-purple-500/20 text-purple-300 border-purple-500/30 hover:bg-purple-500/30"
+            }`}
+          >
+            <span>{isManagingAgents ? "👁️" : "⚙️"}</span>
+            <span>{isManagingAgents ? "Hide Agents" : "Manage Agents"}</span>
           </button>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors border border-emerald-500/30">
+          <button
+            onClick={() => setIsAnalyticsOpen(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors border border-emerald-500/30"
+          >
             <span>📊</span>
             <span>View Analytics</span>
           </button>
         </div>
       </div>
+
+      <AnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+      />
     </div>
   );
 }
