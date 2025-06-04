@@ -101,18 +101,18 @@ export class ChatroomService {
       
       // For now, still return mock response since we need to handle the actual response parsing
       // In production, you'd parse the actual result from AO
-      return this.getMockResponse(action, processId);
+      return this.getMockResponse(action, processId, tags);
     } catch (error) {
       console.error('Error sending AO message:', error);
       
       // If real AO call fails, fallback to mock for development
       console.log('Falling back to mock response for development');
-      return this.getMockResponse(action, processId);
+      return this.getMockResponse(action, processId, tags);
     }
   }
 
   // Mock response generator for development/testing
-  private getMockResponse(action: string, processId: string) {
+  private getMockResponse(action: string, processId: string, tags?: Record<string, string>) {
     // Enhanced mock data for user's specific process
     const isUserProcess = processId === 'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY';
     
@@ -189,6 +189,20 @@ export class ChatroomService {
           Status: 'PaymentRequired',
           Amount: isUserProcess ? '1000' : '100', // Match your Lua AccessPrice
           TokenProcess: 'hvM1eUc1_cGPlpguN55VqM9W7tWoakvYyhNrdWd5V50'
+        };
+      
+      case 'CheckMembership':
+        // For demo purposes, let's assume the user's trading agent is a member of trading-alpha
+        const agentId = tags?.AgentId;
+        const isMember = (
+          processId === 'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY' && 
+          agentId === '4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o'
+        );
+        
+        return {
+          Action: 'MembershipStatus',
+          Data: isMember ? 'Member' : 'Not a member',
+          Status: isMember ? 'Member' : 'NotMember'
         };
       
       default:
@@ -366,6 +380,50 @@ export class ChatroomService {
   getProcessId(chatroomId: string): string | undefined {
     return MOCK_PROCESS_IDS[chatroomId as keyof typeof MOCK_PROCESS_IDS];
   }
+
+  // Get joined chatrooms for a specific agent process ID
+  async getJoinedChatrooms(agentProcessId: string): Promise<string[]> {
+    try {
+      console.log(`🔍 Checking joined chatrooms for agent: ${agentProcessId}`);
+      
+      // In a real implementation, this would query the agent's process to get joined chatrooms
+      // For now, we'll simulate by checking each known chatroom to see if the agent is a member
+      const joinedChatrooms: string[] = [];
+      
+      for (const [chatroomId, chatroomProcessId] of Object.entries(MOCK_PROCESS_IDS)) {
+        if (chatroomProcessId) {
+          try {
+            // Query the chatroom to check if our agent is a member
+            const response = await this.sendAOMessage(chatroomProcessId, 'CheckMembership', '', {
+              AgentId: agentProcessId
+            });
+            
+            if (response.Status === 'Success' || response.Status === 'Member') {
+              joinedChatrooms.push(chatroomProcessId);
+              console.log(`✅ Agent ${agentProcessId.slice(0, 8)}... is member of chatroom ${chatroomId}`);
+            }
+          } catch (error) {
+            console.error(`Error checking membership for chatroom ${chatroomId}:`, error);
+          }
+        }
+      }
+      
+      // For demo purposes, let's assume the user's trading agent has joined the trading-alpha chatroom
+      if (agentProcessId === '4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o') {
+        const tradingAlphaProcess = MOCK_PROCESS_IDS['trading-alpha'];
+        if (tradingAlphaProcess && !joinedChatrooms.includes(tradingAlphaProcess)) {
+          joinedChatrooms.push(tradingAlphaProcess);
+          console.log(`✅ Demo: Agent ${agentProcessId.slice(0, 8)}... is member of trading-alpha chatroom`);
+        }
+      }
+      
+      console.log(`📋 Agent ${agentProcessId.slice(0, 8)}... is member of ${joinedChatrooms.length} chatrooms`);
+      return joinedChatrooms;
+    } catch (error) {
+      console.error(`Error getting joined chatrooms for ${agentProcessId}:`, error);
+      return [];
+    }
+  }
 }
 
-export const chatroomService = ChatroomService.getInstance(); 
+export const chatroomService = ChatroomService.getInstance();

@@ -27,6 +27,13 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
   const [joiningRoom, setJoiningRoom] = useState<string | null>(null);
   const [posterData, setPosterData] = useState<{ processId: string; title: string } | null>(null);
   const [lastConnectedState, setLastConnectedState] = useState<boolean>(false);
+  const [joinedChatroomIds, setJoinedChatroomIds] = useState<string[]>([]);
+
+  // Get user's agent process IDs from UserInfoCard mock data
+  const userAgentProcessIds = [
+    '4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o', // Trading Agent Alpha
+    'vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY'  // Data Agent Beta (user's process)
+  ];
 
   // Mock user token count - in real app, this would come from the UserInfoCard or SDK
   const userTokens = 0; // This matches the default from UserInfoCard
@@ -45,6 +52,22 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
         if (isConnected) {
           chatroomService.setWallet(walletContext);
         }
+
+        // Check which chatrooms the user's agents have joined
+        const allJoinedChatrooms: string[] = [];
+        for (const agentProcessId of userAgentProcessIds) {
+          try {
+            const joinedRooms = await chatroomService.getJoinedChatrooms(agentProcessId);
+            allJoinedChatrooms.push(...joinedRooms);
+          } catch (error) {
+            console.error(`Error checking joined chatrooms for agent ${agentProcessId}:`, error);
+          }
+        }
+        
+        // Remove duplicates
+        const uniqueJoinedChatrooms = [...new Set(allJoinedChatrooms)];
+        setJoinedChatroomIds(uniqueJoinedChatrooms);
+        console.log(`🔗 User agents are members of ${uniqueJoinedChatrooms.length} chatrooms:`, uniqueJoinedChatrooms);
 
         // Enhance mock data with real AO data
         const mockChatrooms = chatroomsData as Chatroom[];
@@ -142,6 +165,10 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
     return userTokens >= tokenRequirement;
   };
 
+  const isAlreadyJoined = (room: ExtendedChatroom) => {
+    return room.processId && joinedChatroomIds.includes(room.processId);
+  };
+
   return (
     <div className={`group ${className}`}>
       <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:bg-white/[0.07]">
@@ -229,6 +256,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
               const config = getCategoryConfig(room.category);
               const hasAccess = canAccessChatroom(room.tokenRequirement);
               const isJoining = joiningRoom === room.id;
+              const isJoined = isAlreadyJoined(room);
 
               return (
                 <div
@@ -237,10 +265,10 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                     hasAccess
                       ? "hover:bg-white/10 hover:border-white/20 hover:shadow-lg cursor-pointer hover:scale-[1.02]"
                       : "opacity-50 cursor-not-allowed"
-                  }`}
+                  } ${isJoined ? "ring-2 ring-green-500/50 bg-green-500/5" : ""}`}
                 >
                   {/* Access indicator overlay */}
-                  {!hasAccess && isConnected && (
+                  {!hasAccess && isConnected && !isJoined && (
                     <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center backdrop-blur-[1px]">
                       <div className="bg-red-500/20 text-red-300 px-3 py-2 rounded-lg text-sm font-medium border border-red-500/30">
                         🔒 Requires {room.tokenRequirement} tokens
@@ -248,8 +276,14 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                     </div>
                   )}
 
-                  {/* Real/Mock indicator */}
-                  <div className="absolute top-3 right-3">
+                  {/* Real/Mock indicator and Joined status */}
+                  <div className="absolute top-3 right-3 flex flex-col space-y-2">
+                    {isJoined && (
+                      <div className="flex items-center space-x-1 bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs border border-green-500/30">
+                        <span>✅</span>
+                        <span>JOINED</span>
+                      </div>
+                    )}
                     {room.isReal ? (
                       <div className="flex items-center space-x-1 bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs border border-green-500/30">
                         <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
@@ -351,14 +385,21 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                           config.gradient
                         } hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity ${
                           !isConnected || isJoining ? "opacity-75" : ""
-                        } ${isJoining ? "cursor-not-allowed" : ""}`}
-                        disabled={!isConnected || isJoining}
+                        } ${isJoining ? "cursor-not-allowed" : ""} ${
+                          isJoined ? "bg-none bg-green-600/30 border border-green-500/50" : ""
+                        }`}
+                        disabled={!isConnected || isJoining || isJoined}
                         onClick={() => handleJoinChatroom(room)}
                       >
                         {isJoining ? (
                           <div className="flex items-center justify-center space-x-2">
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             <span>Joining...</span>
+                          </div>
+                        ) : isJoined ? (
+                          <div className="flex items-center justify-center space-x-2">
+                            <span>✅</span>
+                            <span>Already Joined</span>
                           </div>
                         ) : room.isReal ? (
                           isConnected ? "Join AO Chatroom" : "Connect Wallet to Join"
@@ -367,8 +408,8 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                         )}
                       </button>
                       
-                      {/* Post Data button for real chatrooms */}
-                      {room.isReal && room.processId && isConnected && (
+                      {/* Post Data button for real chatrooms - show for all joined rooms */}
+                      {room.isReal && room.processId && isConnected && isJoined && (
                         <button
                           className="w-full px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-zinc-300 text-sm font-medium transition-colors"
                           onClick={() => setPosterData({ processId: room.processId!, title: room.title })}
