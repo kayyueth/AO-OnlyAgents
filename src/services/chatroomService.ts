@@ -46,6 +46,7 @@ const MOCK_PROCESS_IDS = {
 export class ChatroomService {
   private static instance: ChatroomService;
   private walletContext: any = null;
+  private isWalletSet = false;
 
   private constructor() {}
 
@@ -57,7 +58,12 @@ export class ChatroomService {
   }
 
   setWallet(walletContext: any) {
-    this.walletContext = walletContext;
+    // Only set wallet if it's not already set or if connection status changed
+    if (!this.isWalletSet || this.walletContext?.isConnected !== walletContext?.isConnected) {
+      this.walletContext = walletContext;
+      this.isWalletSet = true;
+      console.log('Wallet context updated in ChatroomService');
+    }
   }
 
   // Get wallet functions from the context
