@@ -18,7 +18,7 @@ export interface UserConfig {
 
 // 默认用户配置（您的账户）
 export const DEFAULT_USER_CONFIG: UserConfig = {
-  walletAddress: "YOUR_WALLET_ADDRESS", // 将在运行时替换为实际钱包地址
+  walletAddress: "DISCONNECTED", // 钱包未连接时的占位符，连接后会被真实地址替换
   agents: {
     A: {
       name: "Trading Agent Alpha",

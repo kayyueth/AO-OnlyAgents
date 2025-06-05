@@ -158,24 +158,27 @@ function UserInfoCard({
 }: UserInfoCardProps) {
   const { isConnected } = useWallet();
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-  const { tokenBalances, getTotalTokens } = useAgentTokens();
+  const { tokenBalances, getTotalTokens, userConfig } = useAgentTokens();
 
-  // Mock data for demonstration - in a real app, these would come from the SDK or API calls
-  const mockUserData = {
-    address: "voyngtuscuDCCerY1HSMMYHKEPoMWeF_xvBCgoz7HKU",
-    balance: "0.00 AO",
+  // Use real user data from userConfig when available
+  const userData = {
+    address: isConnected ? (userConfig.walletAddress !== "DISCONNECTED" ? userConfig.walletAddress : "Connecting...") : "Not connected",
+    balance: "0.00 AO", // This could be fetched from wallet
     boundAgentA: {
-      name: AGENT_CONFIG.A.name,
-      processId: AGENT_CONFIG.A.processId,
+      name: userConfig.agents.A.name,
+      processId: userConfig.agents.A.processId,
     },
     boundAgentB: {
-      name: AGENT_CONFIG.B.name,
-      processId: AGENT_CONFIG.B.processId,
+      name: userConfig.agents.B.name,
+      processId: userConfig.agents.B.processId,
     },
-    tokenCount: getTotalTokens(), // Sum of both agents' current tokens
+    tokenCount: getTotalTokens(),
   };
 
   const truncateAddress = (addr: string) => {
+    if (addr === "Not connected" || addr === "Connecting...") {
+      return addr;
+    }
     return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
   };
 
@@ -224,11 +227,11 @@ function UserInfoCard({
                   </span>
                 </div>
                 <div className="font-mono text-sm text-zinc-200 bg-zinc-800/50 rounded-lg px-3 py-2 border border-zinc-700/50">
-                  {truncateAddress(mockUserData.address)}
+                  {truncateAddress(userData.address)}
                 </div>
                 <button
                   onClick={() =>
-                    navigator.clipboard.writeText(mockUserData.address)
+                    navigator.clipboard.writeText(userData.address)
                   }
                   className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors"
                 >
@@ -243,7 +246,7 @@ function UserInfoCard({
                   <span className="text-sm font-medium text-zinc-400">Balance</span>
                 </div>
                 <div className="text-xl font-bold text-zinc-100">
-                  {mockUserData.balance}
+                  {userData.balance}
                 </div>
                 <div className="text-xs text-zinc-500">Arweave Tokens</div>
               </div>
@@ -257,10 +260,10 @@ function UserInfoCard({
                   </span>
                 </div>
                 <div className="text-sm text-zinc-200 mb-1">
-                  {mockUserData.boundAgentA.name}
+                  {userData.boundAgentA.name}
                 </div>
                 <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50 mb-2">
-                  {truncateAddress(mockUserData.boundAgentA.processId)}
+                  {truncateAddress(userData.boundAgentA.processId)}
                 </div>
                 <div className="flex items-center space-x-1">
                   <span className="text-xs text-zinc-500">Tokens:</span>
@@ -279,10 +282,10 @@ function UserInfoCard({
                   </span>
                 </div>
                 <div className="text-sm text-zinc-200 mb-1">
-                  {mockUserData.boundAgentB.name}
+                  {userData.boundAgentB.name}
                 </div>
                 <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50 mb-2">
-                  {truncateAddress(mockUserData.boundAgentB.processId)}
+                  {truncateAddress(userData.boundAgentB.processId)}
                 </div>
                 <div className="flex items-center space-x-1">
                   <span className="text-xs text-zinc-500">Tokens:</span>
@@ -334,7 +337,7 @@ function UserInfoCard({
                       Total Token Holdings
                     </div>
                     <div className="text-xl font-bold text-emerald-400">
-                      {mockUserData.tokenCount.toLocaleString()}
+                      {userData.tokenCount.toLocaleString()}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
                       Alpha: {tokenBalances.A.toLocaleString()} | Beta:{" "}
