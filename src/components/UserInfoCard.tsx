@@ -97,87 +97,94 @@ function UserInfoCard({
           </div>
 
           {/* Bound AO Agent */}
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10 col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-3">
+          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+            <div className="flex items-center space-x-2 mb-2">
               <span className="text-lg">🤖</span>
               <span className="text-sm font-medium text-zinc-400">
-                Bound Agents
+                Agent Alpha
               </span>
             </div>
-            
-            {/* Agent A */}
-            <div className="mb-4 last:mb-0">
-              <div className="text-sm font-semibold text-zinc-200 mb-2">
-                {mockUserData.boundAgentA.name}
-              </div>
-              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-3 py-2 border border-zinc-700/50 break-all">
-                {mockUserData.boundAgentA.processId}
-              </div>
-              <button
-                onClick={() => navigator.clipboard.writeText(mockUserData.boundAgentA.processId)}
-                className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors"
-              >
-                Click to copy process ID
-              </button>
+            <div className="text-sm text-zinc-200 mb-1">
+              {mockUserData.boundAgentA.name}
             </div>
-
-            {/* Agent B */}
-            <div className="mb-0">
-              <div className="text-sm font-semibold text-zinc-200 mb-2 flex items-center space-x-2">
-                <span>{mockUserData.boundAgentB.name}</span>
-              </div>
-              <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-3 py-2 border border-zinc-700/50 break-all">
-                {mockUserData.boundAgentB.processId}
-              </div>
-              <button
-                onClick={() => navigator.clipboard.writeText(mockUserData.boundAgentB.processId)}
-                className="text-xs text-blue-400 hover:text-blue-300 mt-1 transition-colors"
-              >
-                Click to copy process ID
-              </button>
+            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50">
+              {truncateAddress(mockUserData.boundAgentA.processId)}
             </div>
           </div>
 
-          {/* Token Count */}
+          {/* Bound AO Agent B */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center space-x-2 mb-2">
-              <span className="text-lg">🪙</span>
-              <span className="text-sm font-medium text-zinc-400">Tokens</span>
+              <span className="text-lg">🤖</span>
+              <span className="text-sm font-medium text-zinc-400">
+                Agent Beta
+              </span>
             </div>
-            <div className="text-xl font-bold text-zinc-100">
-              {mockUserData.tokenCount.toLocaleString()}
+            <div className="text-sm text-zinc-200 mb-1">
+              {mockUserData.boundAgentB.name}
             </div>
-            <div className="text-xs text-zinc-500">Available Tokens</div>
+            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50">
+              {truncateAddress(mockUserData.boundAgentB.processId)}
+            </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-white/10">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg text-sm font-medium hover:bg-blue-500/30 transition-colors border border-blue-500/30">
-            <span>🔄</span>
-            <span>Refresh Data</span>
-          </button>
-          <button
-            onClick={onToggleManageAgents}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-              isManagingAgents
-                ? "bg-purple-500/30 text-purple-200 border-purple-500/50 hover:bg-purple-500/40"
-                : "bg-purple-500/20 text-purple-300 border-purple-500/30 hover:bg-purple-500/30"
-            }`}
-          >
-            <span>{isManagingAgents ? "👁️" : "⚙️"}</span>
-            <span>{isManagingAgents ? "Hide Agents" : "Manage Agents"}</span>
-          </button>
+        <div className="flex flex-wrap gap-3 mt-6">
           <button
             onClick={() => setIsAnalyticsOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 text-emerald-300 rounded-lg text-sm font-medium hover:bg-emerald-500/30 transition-colors border border-emerald-500/30"
+            className="flex-1 min-w-[140px] px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl text-white font-medium transition-all duration-300 transform shadow-lg shadow-emerald-500/20"
           >
-            <span>📊</span>
-            <span>View Analytics</span>
+            <div className="flex items-center justify-center space-x-2">
+              <span>📊</span>
+              <span>View Analytics</span>
+            </div>
           </button>
+
+          {onToggleManageAgents && (
+            <button
+              onClick={onToggleManageAgents}
+              className={`flex-1 min-w-[140px] px-4 py-3 rounded-xl font-medium transition-all duration-300 transform shadow-lg ${
+                isManagingAgents
+                  ? "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white shadow-orange-500/20"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-blue-500/20"
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <span>{isManagingAgents ? "🔒" : "⚡"}</span>
+                <span>
+                  {isManagingAgents ? "Hide Agents" : "Manage Agents"}
+                </span>
+              </div>
+            </button>
+          )}
+        </div>
+
+        {/* Token Performance Summary */}
+        <div className="mt-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-xl p-4 border border-emerald-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-lg">🪙</span>
+              <div>
+                <div className="text-sm font-medium text-zinc-400">
+                  Token Holdings
+                </div>
+                <div className="text-xl font-bold text-emerald-400">
+                  {mockUserData.tokenCount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-medium text-zinc-400">
+                24h Change
+              </div>
+              <div className="text-lg font-bold text-emerald-400">+12.5%</div>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Analytics Modal */}
       <AnalyticsModal
         isOpen={isAnalyticsOpen}
         onClose={() => setIsAnalyticsOpen(false)}
