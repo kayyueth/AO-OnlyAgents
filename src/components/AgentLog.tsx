@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import agentALog from "../data/agentA_log.json";
 import agentBLog from "../data/agentB_log.json";
 import { format } from "date-fns";
-import { AGENT_CONFIG } from "./UserInfoCard";
+import { AGENT_CONFIG, useAgentTokens } from "./UserInfoCard";
 
 interface AgentLogEntry {
   id: string;
@@ -24,6 +24,8 @@ function AgentLog({ agent }: AgentLogProps) {
     return agent === "A" ? agentALog : agentBLog;
   }, [agent]);
 
+  const { tokenBalances } = useAgentTokens();
+
   const agentConfig = {
     A: {
       gradient: "from-blue-500 to-cyan-600",
@@ -33,7 +35,7 @@ function AgentLog({ agent }: AgentLogProps) {
       icon: "⛏️",
       shadowColor: "shadow-blue-500/20",
       processId: AGENT_CONFIG.A.processId,
-      tokenAmount: AGENT_CONFIG.A.tokenAmount,
+      tokenAmount: tokenBalances.A,
       role: AGENT_CONFIG.A.role,
     },
     B: {
@@ -44,7 +46,7 @@ function AgentLog({ agent }: AgentLogProps) {
       icon: "🔍",
       shadowColor: "shadow-yellow-500/20",
       processId: AGENT_CONFIG.B.processId,
-      tokenAmount: AGENT_CONFIG.B.tokenAmount,
+      tokenAmount: tokenBalances.B,
       role: AGENT_CONFIG.B.role,
     },
   };

@@ -4,7 +4,7 @@ import SharedMemoryTimeline from "./components/SharedMemoryTimeline";
 import AgentLog from "./components/AgentLog";
 import MemoryExplorer from "./components/MemoryExplorer";
 import WalletConnectButton from "./components/WalletConnectButton";
-import UserInfoCard from "./components/UserInfoCard";
+import UserInfoCard, { AgentTokenProvider } from "./components/UserInfoCard";
 import ChatroomsCard from "./components/ChatroomsCard";
 
 type TabType = "overview" | "footprint";
@@ -182,7 +182,9 @@ function App() {
       appInfo={{ name: "AI Memory Hub" }}
       muUrl="https://mu.ao-testnet.xyz"
     >
-      <AppContent />
+      <AgentTokenProvider>
+        <AppContent />
+      </AgentTokenProvider>
     </AOSyncProvider>
   );
 }

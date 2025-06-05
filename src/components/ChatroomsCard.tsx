@@ -3,7 +3,7 @@ import { useWallet } from "@vela-ventures/aosync-sdk-react";
 import chatroomsData from "../data/chatroom.json";
 import { chatroomService, ExtendedChatroom } from "../services/chatroomService";
 import ChatroomDataPoster from "./ChatroomDataPoster";
-import { AGENT_CONFIG, getUserTotalTokens } from "./UserInfoCard";
+import { AGENT_CONFIG, useAgentTokens } from "./UserInfoCard";
 
 interface Chatroom {
   id: string;
@@ -20,18 +20,133 @@ interface ChatroomsCardProps {
   className?: string;
 }
 
+// Agent selection modal component
+interface AgentSelectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectAgent: (agent: "A" | "B") => void;
+  room: ExtendedChatroom;
+  tokenBalances: { A: number; B: number };
+}
+
+function AgentSelectionModal({
+  isOpen,
+  onClose,
+  onSelectAgent,
+  room,
+  tokenBalances,
+}: AgentSelectionModalProps) {
+  if (!isOpen) return null;
+
+  const agents = [
+    {
+      key: "A" as const,
+      name: AGENT_CONFIG.A.name,
+      role: AGENT_CONFIG.A.role,
+      icon: "⛏️",
+      gradient: "from-blue-500 to-cyan-600",
+      tokens: tokenBalances.A,
+      canAfford: tokenBalances.A >= room.tokenRequirement,
+    },
+    {
+      key: "B" as const,
+      name: AGENT_CONFIG.B.name,
+      role: AGENT_CONFIG.B.role,
+      icon: "🔍",
+      gradient: "from-yellow-500 to-orange-600",
+      tokens: tokenBalances.B,
+      canAfford: tokenBalances.B >= room.tokenRequirement,
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 max-w-md w-full mx-4">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-white">Select Agent to Join</h3>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="text-zinc-300 text-sm mb-4">
+          Choose which agent will join "{room.title}" (Cost:{" "}
+          {room.tokenRequirement} tokens)
+        </p>
+
+        <div className="space-y-3">
+          {agents.map((agent) => (
+            <button
+              key={agent.key}
+              onClick={() => onSelectAgent(agent.key)}
+              disabled={!agent.canAfford}
+              className={`w-full p-4 rounded-xl border transition-all duration-300 ${
+                agent.canAfford
+                  ? `bg-gradient-to-r ${agent.gradient}/10 border-white/20 hover:border-white/30 hover:bg-white/5`
+                  : "bg-red-500/10 border-red-500/30 cursor-not-allowed opacity-60"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">{agent.icon}</span>
+                  <div className="text-left">
+                    <div className="font-medium text-white">{agent.name}</div>
+                    <div className="text-xs text-zinc-400">{agent.role}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div
+                    className={`font-bold ${
+                      agent.canAfford ? "text-white" : "text-red-300"
+                    }`}
+                  >
+                    {agent.tokens.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-zinc-400">tokens</div>
+                </div>
+              </div>
+
+              {!agent.canAfford && (
+                <div className="mt-2 text-xs text-red-300 text-center">
+                  Insufficient tokens (need{" "}
+                  {room.tokenRequirement - agent.tokens} more)
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 text-xs text-zinc-500 text-center">
+          Tokens will be deducted from the selected agent's balance
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
   const walletContext = useWallet();
   const { isConnected } = walletContext;
   const [chatrooms, setChatrooms] = useState<ExtendedChatroom[]>([]);
   const [loading, setLoading] = useState(true);
   const [joiningRoom, setJoiningRoom] = useState<string | null>(null);
+  const [leavingRoom, setLeavingRoom] = useState<string | null>(null);
   const [posterData, setPosterData] = useState<{
     processId: string;
     title: string;
   } | null>(null);
   const [lastConnectedState, setLastConnectedState] = useState<boolean>(false);
   const [joinedChatroomIds, setJoinedChatroomIds] = useState<string[]>([]);
+
+  // Agent selection modal state
+  const [showAgentSelection, setShowAgentSelection] =
+    useState<ExtendedChatroom | null>(null);
+
+  // Use shared token management
+  const { tokenBalances, deductAgentTokens, getTotalTokens } = useAgentTokens();
 
   // Get user's agent process IDs from shared config (memoized to prevent re-renders)
   const userAgentProcessIds = useMemo(
@@ -41,9 +156,6 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
     ],
     []
   );
-
-  // Get user token count from shared calculation - matches UserInfoCard "Token Holdings"
-  const userTokens = getUserTotalTokens();
 
   // Initialize service with wallet and load chatrooms
   useEffect(() => {
@@ -157,7 +269,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
     };
   }, [isConnected]); // Only depend on connection state
 
-  const handleJoinChatroom = async (room: ExtendedChatroom) => {
+  const handleJoinChatroomClick = (room: ExtendedChatroom) => {
     if (!room.processId) {
       alert(
         "This is a mock chatroom. Real chatroom functionality coming soon!"
@@ -165,27 +277,102 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
       return;
     }
 
-    setJoiningRoom(room.id);
-    try {
-      const result = await chatroomService.joinChatroom(room.processId);
+    // Check if any agent has enough tokens
+    const canAfford =
+      tokenBalances.A >= room.tokenRequirement ||
+      tokenBalances.B >= room.tokenRequirement;
 
-      if (result.success) {
-        alert(`Successfully joined ${room.title}!`);
-        // Refresh chatroom data
-        const mockChatrooms = chatroomsData as Chatroom[];
-        const enhancedChatrooms =
-          await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
-        setChatrooms(enhancedChatrooms);
-      } else if (result.paymentRequired) {
-        alert(`Payment required: ${result.message}`);
-      } else {
-        alert(`Failed to join: ${result.message}`);
+    if (!canAfford) {
+      alert(
+        `Insufficient tokens! You need ${room.tokenRequirement} tokens but your agents have ${tokenBalances.A} and ${tokenBalances.B} tokens respectively.`
+      );
+      return;
+    }
+
+    // Show agent selection modal
+    setShowAgentSelection(room);
+  };
+
+  const handleAgentSelection = async (
+    agent: "A" | "B",
+    room: ExtendedChatroom
+  ) => {
+    setShowAgentSelection(null);
+    setJoiningRoom(room.id);
+
+    try {
+      // Deduct tokens from selected agent
+      const success = deductAgentTokens(agent, room.tokenRequirement);
+
+      if (!success) {
+        alert(
+          `Insufficient tokens! Agent ${agent} needs ${room.tokenRequirement} tokens but only has ${tokenBalances[agent]}.`
+        );
+        return;
       }
+
+      // Add chatroom to joined list (mock joining)
+      if (room.processId && !joinedChatroomIds.includes(room.processId)) {
+        setJoinedChatroomIds((prev) => [...prev, room.processId!]);
+      }
+
+      // For real chatrooms, also try to join via service
+      if (room.isReal && room.processId) {
+        const result = await chatroomService.joinChatroom(room.processId);
+
+        if (!result.success && result.paymentRequired) {
+          // If real service fails, we keep the mock join but show warning
+          console.warn(`Real service join failed: ${result.message}`);
+        }
+      }
+
+      const agentName =
+        agent === "A" ? AGENT_CONFIG.A.name : AGENT_CONFIG.B.name;
+      alert(
+        `Successfully joined ${room.title} with ${agentName}! ${room.tokenRequirement} tokens deducted from Agent ${agent}.`
+      );
+
+      // Refresh chatroom data
+      const mockChatrooms = chatroomsData as Chatroom[];
+      const enhancedChatrooms =
+        await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
+      setChatrooms(enhancedChatrooms);
     } catch (error) {
       console.error("Error joining chatroom:", error);
       alert("Error joining chatroom. Please try again.");
     } finally {
       setJoiningRoom(null);
+    }
+  };
+
+  const handleLeaveChatroom = async (room: ExtendedChatroom) => {
+    if (!room.processId) {
+      alert("Cannot leave mock chatroom.");
+      return;
+    }
+
+    setLeavingRoom(room.id);
+    try {
+      // Remove chatroom from joined list (mock leaving)
+      setJoinedChatroomIds((prev) =>
+        prev.filter((id) => id !== room.processId)
+      );
+
+      // Note: In a real implementation, you might want to refund some tokens
+      // For now, we don't refund tokens when leaving
+
+      alert(`Successfully left ${room.title}!`);
+
+      // Refresh chatroom data
+      const mockChatrooms = chatroomsData as Chatroom[];
+      const enhancedChatrooms =
+        await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
+      setChatrooms(enhancedChatrooms);
+    } catch (error) {
+      console.error("Error leaving chatroom:", error);
+      alert("Error leaving chatroom. Please try again.");
+    } finally {
+      setLeavingRoom(null);
     }
   };
 
@@ -234,8 +421,10 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
     if (!isConnected) {
       return true;
     }
-    // If wallet is connected, use token-based access control
-    return userTokens >= tokenRequirement;
+    // If wallet is connected, check if either agent has enough tokens
+    return (
+      tokenBalances.A >= tokenRequirement || tokenBalances.B >= tokenRequirement
+    );
   };
 
   const isAlreadyJoined = (room: ExtendedChatroom) => {
@@ -281,8 +470,12 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                     Your Tokens:
                   </span>
                   <span className="ml-2 text-lg font-bold text-zinc-100">
-                    {userTokens}
+                    {getTotalTokens().toLocaleString()}
                   </span>
+                  <div className="text-xs text-zinc-500 mt-1">
+                    Agent A: {tokenBalances.A.toLocaleString()} | Agent B:{" "}
+                    {tokenBalances.B.toLocaleString()}
+                  </div>
                 </div>
               </div>
               <div className="text-xs text-zinc-500">
@@ -334,6 +527,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
               const config = getCategoryConfig(room.category);
               const hasAccess = canAccessChatroom(room.tokenRequirement);
               const isJoining = joiningRoom === room.id;
+              const isLeaving = leavingRoom === room.id;
               const isJoined = isAlreadyJoined(room);
 
               return (
@@ -465,42 +659,67 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                     </div>
                   </div>
 
-                  {/* Join button */}
+                  {/* Action buttons */}
                   {hasAccess && (
                     <div className="space-y-2 mt-4">
-                      <button
-                        className={`w-full px-4 py-2 bg-gradient-to-r ${
-                          config.gradient
-                        } hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity ${
-                          !isConnected || isJoining ? "opacity-75" : ""
-                        } ${isJoining ? "cursor-not-allowed" : ""} ${
-                          isJoined
-                            ? "bg-none bg-green-600/30 border border-green-500/50"
-                            : ""
-                        }`}
-                        disabled={!isConnected || isJoining || isJoined}
-                        onClick={() => handleJoinChatroom(room)}
-                      >
-                        {isJoining ? (
-                          <div className="flex items-center justify-center space-x-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            <span>Joining...</span>
-                          </div>
-                        ) : isJoined ? (
-                          <div className="flex items-center justify-center space-x-2">
-                            <span>✅</span>
-                            <span>Already Joined</span>
-                          </div>
-                        ) : room.isReal ? (
-                          isConnected ? (
-                            "Join AO Chatroom"
+                      {!isJoined ? (
+                        // Join button for non-joined rooms
+                        <button
+                          className={`w-full px-4 py-2 bg-gradient-to-r ${
+                            config.gradient
+                          } hover:opacity-90 rounded-lg text-white text-sm font-medium transition-opacity ${
+                            !isConnected || isJoining ? "opacity-75" : ""
+                          } ${isJoining ? "cursor-not-allowed" : ""}`}
+                          disabled={!isConnected || isJoining}
+                          onClick={() => handleJoinChatroomClick(room)}
+                        >
+                          {isJoining ? (
+                            <div className="flex items-center justify-center space-x-2">
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                              <span>Joining...</span>
+                            </div>
+                          ) : room.isReal ? (
+                            isConnected ? (
+                              `Join AO Chatroom (${room.tokenRequirement} tokens)`
+                            ) : (
+                              "Connect Wallet to Join"
+                            )
                           ) : (
-                            "Connect Wallet to Join"
-                          )
-                        ) : (
-                          "View Demo Room"
-                        )}
-                      </button>
+                            "View Demo Room"
+                          )}
+                        </button>
+                      ) : (
+                        // Joined state with Leave button
+                        <div className="space-y-2">
+                          <div className="w-full px-4 py-2 bg-green-600/30 border border-green-500/50 rounded-lg text-green-300 text-sm font-medium text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <span>✅</span>
+                              <span>Already Joined</span>
+                            </div>
+                          </div>
+
+                          {/* Leave button */}
+                          <button
+                            className={`w-full px-4 py-2 bg-red-600/20 border border-red-500/30 hover:bg-red-600/30 rounded-lg text-red-300 text-sm font-medium transition-colors ${
+                              isLeaving ? "cursor-not-allowed opacity-75" : ""
+                            }`}
+                            disabled={isLeaving}
+                            onClick={() => handleLeaveChatroom(room)}
+                          >
+                            {isLeaving ? (
+                              <div className="flex items-center justify-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-red-300/30 border-t-red-300 rounded-full animate-spin"></div>
+                                <span>Leaving...</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center space-x-2">
+                                <span>🚪</span>
+                                <span>Leave Chatroom</span>
+                              </div>
+                            )}
+                          </button>
+                        </div>
+                      )}
 
                       {/* Post Data button for real chatrooms - show for all joined rooms */}
                       {room.isReal &&
@@ -535,6 +754,19 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
           </p>
         </div>
       </div>
+
+      {/* Agent Selection Modal */}
+      {showAgentSelection && (
+        <AgentSelectionModal
+          isOpen={true}
+          onClose={() => setShowAgentSelection(null)}
+          onSelectAgent={(agent) =>
+            handleAgentSelection(agent, showAgentSelection)
+          }
+          room={showAgentSelection}
+          tokenBalances={tokenBalances}
+        />
+      )}
 
       {/* ChatroomDataPoster Modal */}
       {posterData && (

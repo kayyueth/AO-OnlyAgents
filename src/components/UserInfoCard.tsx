@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, createContext, useContext } from "react";
 import { useWallet } from "@vela-ventures/aosync-sdk-react";
 import AnalyticsModal from "./AnalyticsModal";
 
@@ -7,20 +7,89 @@ export const AGENT_CONFIG = {
   A: {
     name: "Trading Agent Alpha",
     processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
-    tokenAmount: 5000,
+    initialTokenAmount: 5000,
     role: "Data Miner",
   },
   B: {
     name: "Data Agent Beta",
     processId: "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY",
-    tokenAmount: 10000,
+    initialTokenAmount: 10000,
     role: "Analyst",
   },
 };
 
-// Calculate total user tokens from agent amounts
+// Create context for managing agent token balances
+interface AgentTokenState {
+  A: number;
+  B: number;
+}
+
+interface AgentTokenContextType {
+  tokenBalances: AgentTokenState;
+  updateAgentTokens: (agent: "A" | "B", amount: number) => void;
+  deductAgentTokens: (agent: "A" | "B", amount: number) => boolean;
+  getTotalTokens: () => number;
+}
+
+const AgentTokenContext = createContext<AgentTokenContextType | null>(null);
+
+// Provider component
+export const AgentTokenProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [tokenBalances, setTokenBalances] = useState<AgentTokenState>({
+    A: AGENT_CONFIG.A.initialTokenAmount,
+    B: AGENT_CONFIG.B.initialTokenAmount,
+  });
+
+  const updateAgentTokens = (agent: "A" | "B", amount: number) => {
+    setTokenBalances((prev) => ({
+      ...prev,
+      [agent]: amount,
+    }));
+  };
+
+  const deductAgentTokens = (agent: "A" | "B", amount: number): boolean => {
+    if (tokenBalances[agent] >= amount) {
+      setTokenBalances((prev) => ({
+        ...prev,
+        [agent]: prev[agent] - amount,
+      }));
+      return true;
+    }
+    return false;
+  };
+
+  const getTotalTokens = () => {
+    return tokenBalances.A + tokenBalances.B;
+  };
+
+  return (
+    <AgentTokenContext.Provider
+      value={{
+        tokenBalances,
+        updateAgentTokens,
+        deductAgentTokens,
+        getTotalTokens,
+      }}
+    >
+      {children}
+    </AgentTokenContext.Provider>
+  );
+};
+
+// Hook to use the context
+export const useAgentTokens = () => {
+  const context = useContext(AgentTokenContext);
+  if (!context) {
+    throw new Error("useAgentTokens must be used within AgentTokenProvider");
+  }
+  return context;
+};
+
+// Calculate total user tokens from agent amounts (for backwards compatibility)
 export const getUserTotalTokens = () => {
-  return AGENT_CONFIG.A.tokenAmount + AGENT_CONFIG.B.tokenAmount;
+  return AGENT_CONFIG.A.initialTokenAmount + AGENT_CONFIG.B.initialTokenAmount;
 };
 
 interface UserInfoCardProps {
@@ -36,6 +105,7 @@ function UserInfoCard({
 }: UserInfoCardProps) {
   const { isConnected } = useWallet();
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const { tokenBalances, getTotalTokens } = useAgentTokens();
 
   // Mock data for demonstration - in a real app, these would come from the SDK or API calls
   const mockUserData = {
@@ -49,7 +119,7 @@ function UserInfoCard({
       name: AGENT_CONFIG.B.name,
       processId: AGENT_CONFIG.B.processId,
     },
-    tokenCount: getUserTotalTokens(), // Sum of both agents' tokens
+    tokenCount: getTotalTokens(), // Sum of both agents' current tokens
   };
 
   const truncateAddress = (addr: string) => {
@@ -117,7 +187,7 @@ function UserInfoCard({
             <div className="text-xs text-zinc-500">Arweave Tokens</div>
           </div>
 
-          {/* Bound AO Agent */}
+          {/* Bound AO Agent Alpha */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-lg">🤖</span>
@@ -128,12 +198,18 @@ function UserInfoCard({
             <div className="text-sm text-zinc-200 mb-1">
               {mockUserData.boundAgentA.name}
             </div>
-            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50">
+            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50 mb-2">
               {truncateAddress(mockUserData.boundAgentA.processId)}
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-xs text-zinc-500">Tokens:</span>
+              <span className="text-sm font-bold text-blue-400">
+                {tokenBalances.A.toLocaleString()}
+              </span>
             </div>
           </div>
 
-          {/* Bound AO Agent B */}
+          {/* Bound AO Agent Beta */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-lg">🤖</span>
@@ -144,8 +220,14 @@ function UserInfoCard({
             <div className="text-sm text-zinc-200 mb-1">
               {mockUserData.boundAgentB.name}
             </div>
-            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50">
+            <div className="font-mono text-xs text-zinc-400 bg-zinc-800/50 rounded px-2 py-1 border border-zinc-700/50 mb-2">
               {truncateAddress(mockUserData.boundAgentB.processId)}
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-xs text-zinc-500">Tokens:</span>
+              <span className="text-sm font-bold text-yellow-400">
+                {tokenBalances.B.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -188,10 +270,14 @@ function UserInfoCard({
               <span className="text-lg">🪙</span>
               <div>
                 <div className="text-sm font-medium text-zinc-400">
-                  Token Holdings
+                  Total Token Holdings
                 </div>
                 <div className="text-xl font-bold text-emerald-400">
                   {mockUserData.tokenCount.toLocaleString()}
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  Alpha: {tokenBalances.A.toLocaleString()} | Beta:{" "}
+                  {tokenBalances.B.toLocaleString()}
                 </div>
               </div>
             </div>
