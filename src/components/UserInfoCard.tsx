@@ -5,16 +5,16 @@ import AnalyticsModal from "./AnalyticsModal";
 // Shared agent configuration to keep token amounts consistent across components
 export const AGENT_CONFIG = {
   A: {
-    name: "Trading Agent Alpha",
+    name: "Data Miner",
     processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
     initialTokenAmount: 5000,
     role: "Data Miner",
   },
   B: {
-    name: "Data Agent Beta",
+    name: "Data Analyst",
     processId: "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY",
     initialTokenAmount: 10000,
-    role: "Analyst",
+    role: "Data Analyst",
   },
 };
 
@@ -109,8 +109,8 @@ function UserInfoCard({
 
   // Mock data for demonstration - in a real app, these would come from the SDK or API calls
   const mockUserData = {
-    address: "BeaconWalletAddressExample123456789",
-    balance: "1.234 AO",
+    address: "voyngtuscuDCCerY1HSMMYHKEPoMWeF_xvBCgoz7HKU",
+    balance: "0.00 AO",
     boundAgentA: {
       name: AGENT_CONFIG.A.name,
       processId: AGENT_CONFIG.A.processId,

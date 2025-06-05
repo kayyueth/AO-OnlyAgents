@@ -3,7 +3,7 @@
     "id": "xyz123",
     "timestamp": "2024-06-01T10:00:00Z",
     "agent": "Agent A",
-    "type": "alpha_signal",
+    "type": "data_mining",
     "summary": "Detected significant price movement in $XYZ.",
     "details": { "price": 42.1, "volume": 10000 }
   },
@@ -11,7 +11,7 @@
     "id": "abc456",
     "timestamp": "2024-06-01T10:05:00Z",
     "agent": "Agent B",
-    "type": "beta_signal",
+    "type": "data_analysis",
     "summary": "Observed anomaly in $ABC trading pattern.",
     "details": { "price": 13.7, "anomalyScore": 0.92 }
   },
@@ -19,7 +19,7 @@
     "id": "def789",
     "timestamp": "2024-06-01T10:10:00Z",
     "agent": "Agent A",
-    "type": "gamma_signal",
+    "type": "data_mining",
     "summary": "Flagged unusual volume in $DEF.",
     "details": { "price": 7.5, "volume": 50000 }
   }

@@ -40,12 +40,10 @@ function SharedMemoryTimeline() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "alpha_signal":
+      case "data_mining":
         return "🔵";
-      case "beta_signal":
+      case "data_analysis":
         return "🟡";
-      case "gamma_signal":
-        return "🟢";
       default:
         return "⚡";
     }
@@ -53,12 +51,10 @@ function SharedMemoryTimeline() {
 
   const getTypeGradient = (type: string) => {
     switch (type) {
-      case "alpha_signal":
+      case "data_mining":
         return "from-blue-500 to-indigo-600";
-      case "beta_signal":
+      case "data_analysis":
         return "from-yellow-500 to-amber-600";
-      case "gamma_signal":
-        return "from-green-500 to-emerald-600";
       default:
         return "from-purple-500 to-violet-600";
     }

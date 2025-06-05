@@ -56,12 +56,10 @@ function MemoryExplorer() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "alpha_signal":
+      case "data_mining":
         return "🔵";
-      case "beta_signal":
+      case "data_analysis":
         return "🟡";
-      case "gamma_signal":
-        return "🟢";
       default:
         return "⚡";
     }
