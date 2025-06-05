@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import agentALog from "../data/agentA_log.json";
 import agentBLog from "../data/agentB_log.json";
 import { format } from "date-fns";
+import { AGENT_CONFIG } from "./UserInfoCard";
 
 interface AgentLogEntry {
   id: string;
@@ -16,19 +17,12 @@ interface AgentLogEntry {
 
 interface AgentLogProps {
   agent: "A" | "B";
-  onMemorySelect?: (memoryId: string | null) => void;
 }
 
-function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
+function AgentLog({ agent }: AgentLogProps) {
   const logs: AgentLogEntry[] = useMemo(() => {
     return agent === "A" ? agentALog : agentBLog;
   }, [agent]);
-
-  const handleLogClick = (log: AgentLogEntry) => {
-    if (log.memoryId && onMemorySelect) {
-      onMemorySelect(log.memoryId);
-    }
-  };
 
   const agentConfig = {
     A: {
@@ -38,9 +32,9 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
       textColor: "text-blue-400",
       icon: "⛏️",
       shadowColor: "shadow-blue-500/20",
-      processId: "7XJpnm1724P8Ek0UbTMydBrfLR4g08wStKEynwfjc64",
-      tokenAmount: 5000,
-      role: "Data Miner",
+      processId: AGENT_CONFIG.A.processId,
+      tokenAmount: AGENT_CONFIG.A.tokenAmount,
+      role: AGENT_CONFIG.A.role,
     },
     B: {
       gradient: "from-yellow-500 to-orange-600",
@@ -49,9 +43,9 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
       textColor: "text-yellow-400",
       icon: "🔍",
       shadowColor: "shadow-yellow-500/20",
-      processId: "9kU1RYzr5WGiQsHxYTP63JFbZqAvWPLBm2FudVZs2ZC",
-      tokenAmount: 10000,
-      role: "Analyst",
+      processId: AGENT_CONFIG.B.processId,
+      tokenAmount: AGENT_CONFIG.B.tokenAmount,
+      role: AGENT_CONFIG.B.role,
     },
   };
 
@@ -128,21 +122,9 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
             [...logs].reverse().map((log, index) => (
               <div
                 key={log.id}
-                onClick={() => handleLogClick(log)}
-                className={`group/item relative bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-all duration-300 ${
-                  log.memoryId
-                    ? "cursor-pointer hover:bg-white/10 hover:border-white/20 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-1"
-                    : ""
-                } animate-fade-in`}
+                className="group/item relative bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 transition-all duration-300 animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                {/* Gradient border effect for clickable items */}
-                {log.memoryId && (
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r ${config.gradient} rounded-xl opacity-0 group-hover/item:opacity-20 transition-opacity duration-300`}
-                  ></div>
-                )}
-
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-2">
@@ -157,13 +139,6 @@ function AgentLog({ agent, onMemorySelect }: AgentLogProps) {
                         </div>
                       )}
                     </div>
-                    {log.memoryId && (
-                      <div className="opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
-                        <span className="text-xs text-zinc-400">
-                          Click to compare →
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <h4 className="text-sm font-semibold text-zinc-100 mb-2 group-hover/item:text-white transition-colors">

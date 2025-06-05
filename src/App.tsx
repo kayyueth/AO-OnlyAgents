@@ -3,7 +3,6 @@ import { AOSyncProvider, useWallet } from "@vela-ventures/aosync-sdk-react";
 import SharedMemoryTimeline from "./components/SharedMemoryTimeline";
 import AgentLog from "./components/AgentLog";
 import MemoryExplorer from "./components/MemoryExplorer";
-import MemoryDiffViewer from "./components/MemoryDiffViewer";
 import WalletConnectButton from "./components/WalletConnectButton";
 import UserInfoCard from "./components/UserInfoCard";
 import ChatroomsCard from "./components/ChatroomsCard";
@@ -11,7 +10,6 @@ import ChatroomsCard from "./components/ChatroomsCard";
 type TabType = "overview" | "footprint";
 
 function AppContent() {
-  const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isManagingAgents, setIsManagingAgents] = useState<boolean>(false);
 
@@ -115,16 +113,11 @@ function AppContent() {
               />
               {isManagingAgents && (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 animate-fade-in">
-                  <AgentLog agent="A" onMemorySelect={setSelectedMemoryId} />
-                  <AgentLog agent="B" onMemorySelect={setSelectedMemoryId} />
+                  <AgentLog agent="A" />
+                  <AgentLog agent="B" />
                 </div>
               )}
               <ChatroomsCard />
-              {selectedMemoryId && (
-                <div className="animate-slide-up">
-                  <MemoryDiffViewer memoryId={selectedMemoryId} />
-                </div>
-              )}
             </div>
           )}
 
@@ -146,36 +139,13 @@ function AppContent() {
                     time
                   </p>
                 </div>
-                <SharedMemoryTimeline onMemorySelect={setSelectedMemoryId} />
+                <SharedMemoryTimeline />
               </div>
 
               {/* Explorer Section */}
               <div>
-                <MemoryExplorer onMemorySelect={setSelectedMemoryId} />
+                <MemoryExplorer />
               </div>
-
-              {/* Selected Memory Details */}
-              {selectedMemoryId && (
-                <div className="animate-slide-up">
-                  <div className="bg-white bg-opacity-5 backdrop-blur-xl rounded-3xl p-8 border border-white border-opacity-10 shadow-2xl">
-                    <div className="mb-8">
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
-                          <span className="text-xl">⚖️</span>
-                        </div>
-                        <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">
-                          Memory Analysis
-                        </h2>
-                      </div>
-                      <p className="text-gray-300 text-lg">
-                        Detailed comparison of how different agents used the
-                        selected memory
-                      </p>
-                    </div>
-                    <MemoryDiffViewer memoryId={selectedMemoryId} />
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>

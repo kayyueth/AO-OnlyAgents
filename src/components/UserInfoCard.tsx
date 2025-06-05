@@ -2,6 +2,27 @@ import React, { useState } from "react";
 import { useWallet } from "@vela-ventures/aosync-sdk-react";
 import AnalyticsModal from "./AnalyticsModal";
 
+// Shared agent configuration to keep token amounts consistent across components
+export const AGENT_CONFIG = {
+  A: {
+    name: "Trading Agent Alpha",
+    processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
+    tokenAmount: 5000,
+    role: "Data Miner",
+  },
+  B: {
+    name: "Data Agent Beta",
+    processId: "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY",
+    tokenAmount: 10000,
+    role: "Analyst",
+  },
+};
+
+// Calculate total user tokens from agent amounts
+export const getUserTotalTokens = () => {
+  return AGENT_CONFIG.A.tokenAmount + AGENT_CONFIG.B.tokenAmount;
+};
+
 interface UserInfoCardProps {
   className?: string;
   isManagingAgents?: boolean;
@@ -21,14 +42,14 @@ function UserInfoCard({
     address: "BeaconWalletAddressExample123456789",
     balance: "1.234 AO",
     boundAgentA: {
-      name: "Trading Agent Alpha",
-      processId: "4MNslKqJBo3d3t4PjKc2YGPjx_PXugfZyVGHaGAJA8o",
+      name: AGENT_CONFIG.A.name,
+      processId: AGENT_CONFIG.A.processId,
     },
     boundAgentB: {
-      name: "Data Agent Beta",
-      processId: "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY",
+      name: AGENT_CONFIG.B.name,
+      processId: AGENT_CONFIG.B.processId,
     },
-    tokenCount: 10000,
+    tokenCount: getUserTotalTokens(), // Sum of both agents' tokens
   };
 
   const truncateAddress = (addr: string) => {

@@ -1,20 +1,31 @@
 [
   {
-    "id": "log1",
-    "timestamp": "2024-06-01T10:12:00Z",
-    "memoryId": "xyz123",
-    "source": "TEE + AO",
-    "action": "Analyzed $XYZ signal from AO",
-    "output": "Confirmed price spike was due to market news.",
-    "fromAO": true
+    "id": "log_a_001",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "source": "trading_strategy",
+    "action": "Market Analysis",
+    "output": "Analyzed 50 trading pairs, identified 3 potential opportunities",
+    "fromAO": true,
+    "fromPrivate": false,
+    "memoryId": "mem_001"
   },
   {
-    "id": "log2",
-    "timestamp": "2024-06-01T10:15:00Z",
-    "memoryId": "def789",
-    "source": "TEE",
-    "action": "Checked $DEF volume against private data",
-    "output": "No matching private anomaly found.",
+    "id": "log_a_002",
+    "timestamp": "2024-01-15T11:15:00Z",
+    "source": "data_mining",
+    "action": "Data Collection",
+    "output": "Collected price data from 10 exchanges",
+    "fromAO": false,
     "fromPrivate": true
+  },
+  {
+    "id": "log_a_003",
+    "timestamp": "2024-01-15T12:00:00Z",
+    "source": "signal_processing",
+    "action": "Signal Generation",
+    "output": "Generated buy signal for ETH/USD pair",
+    "fromAO": true,
+    "fromPrivate": false,
+    "memoryId": "mem_002"
   }
 ]

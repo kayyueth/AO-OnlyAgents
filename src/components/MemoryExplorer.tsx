@@ -12,15 +12,11 @@ interface SharedMemoryEntry {
   [key: string]: unknown;
 }
 
-interface MemoryExplorerProps {
-  onMemorySelect?: (memoryId: string | null) => void;
-}
-
 function getUnique<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
 }
 
-function MemoryExplorer({ onMemorySelect }: MemoryExplorerProps) {
+function MemoryExplorer() {
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [agentFilter, setAgentFilter] = useState<string>("");
   const [from, setFrom] = useState<string>("");
@@ -46,12 +42,6 @@ function MemoryExplorer({ onMemorySelect }: MemoryExplorerProps) {
       return true;
     });
   }, [typeFilter, agentFilter, from, to, searchTerm]);
-
-  const handleMemoryClick = (entry: SharedMemoryEntry) => {
-    if (onMemorySelect) {
-      onMemorySelect(entry.id);
-    }
-  };
 
   const clearFilters = () => {
     setTypeFilter("");
@@ -269,8 +259,7 @@ function MemoryExplorer({ onMemorySelect }: MemoryExplorerProps) {
           filtered.map((entry: SharedMemoryEntry, index) => (
             <div
               key={entry.id}
-              onClick={() => handleMemoryClick(entry)}
-              className="group/item relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-300 cursor-pointer hover:shadow-xl hover:scale-[1.02] animate-fade-in"
+              className="group/item relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Gradient border effect */}
@@ -305,9 +294,6 @@ function MemoryExplorer({ onMemorySelect }: MemoryExplorerProps) {
                   <div className="text-right">
                     <div className="text-sm text-zinc-400 mb-1">
                       {format(new Date(entry.timestamp), "MMM dd, HH:mm")}
-                    </div>
-                    <div className="text-xs text-zinc-500 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
-                      Click to select →
                     </div>
                   </div>
                 </div>

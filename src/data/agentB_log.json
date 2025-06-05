@@ -1,21 +1,31 @@
 [
   {
-    "id": "log3",
-    "timestamp": "2024-06-01T10:13:00Z",
-    "memoryId": "xyz123",
-    "source": "TEE + AO",
-    "action": "Cross-referenced $XYZ with private signals",
-    "output": "Found correlation with private alert.",
+    "id": "log_b_001",
+    "timestamp": "2024-01-15T10:45:00Z",
+    "source": "analysis_engine",
+    "action": "Data Analysis",
+    "output": "Processed market sentiment data from social media",
     "fromAO": true,
+    "fromPrivate": false,
+    "memoryId": "mem_001"
+  },
+  {
+    "id": "log_b_002",
+    "timestamp": "2024-01-15T11:30:00Z",
+    "source": "pattern_recognition",
+    "action": "Pattern Detection",
+    "output": "Identified bullish pattern in BTC chart",
+    "fromAO": false,
     "fromPrivate": true
   },
   {
-    "id": "log4",
-    "timestamp": "2024-06-01T10:16:00Z",
-    "memoryId": "abc456",
-    "source": "AO",
-    "action": "Reviewed $ABC anomaly",
-    "output": "No private data available.",
-    "fromAO": true
+    "id": "log_b_003",
+    "timestamp": "2024-01-15T12:15:00Z",
+    "source": "risk_assessment",
+    "action": "Risk Evaluation",
+    "output": "Calculated risk score for portfolio allocation",
+    "fromAO": true,
+    "fromPrivate": false,
+    "memoryId": "mem_003"
   }
 ]

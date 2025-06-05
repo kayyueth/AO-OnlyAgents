@@ -11,20 +11,13 @@ interface SharedMemoryEntry {
   [key: string]: unknown;
 }
 
-interface SharedMemoryTimelineProps {
-  onMemorySelect?: (memoryId: string | null) => void;
-}
-
-function SharedMemoryTimeline({ onMemorySelect }: SharedMemoryTimelineProps) {
+function SharedMemoryTimeline() {
   const [selectedEntry, setSelectedEntry] = useState<SharedMemoryEntry | null>(
     null
   );
 
   const handleEntryClick = (entry: SharedMemoryEntry) => {
     setSelectedEntry(entry);
-    if (onMemorySelect) {
-      onMemorySelect(entry.id);
-    }
   };
 
   const getAgentConfig = (agent: string) => {
