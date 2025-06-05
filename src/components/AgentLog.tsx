@@ -1,8 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import agentALog from "../data/agentA_log.json";
 import agentBLog from "../data/agentB_log.json";
 import { format } from "date-fns";
 import { AGENT_CONFIG, useAgentTokens } from "./UserInfoCard";
+import AgentSettingsModal from "./AgentSettingsModal";
 
 interface AgentLogEntry {
   id: string;
@@ -25,6 +26,7 @@ function AgentLog({ agent }: AgentLogProps) {
   }, [agent]);
 
   const { tokenBalances } = useAgentTokens();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const agentConfig = {
     A: {
@@ -73,13 +75,24 @@ function AgentLog({ agent }: AgentLogProps) {
               <p className="text-zinc-400 text-sm">Activity Monitor</p>
             </div>
           </div>
-          <div className="text-right">
-            <div
-              className={`text-lg font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}
-            >
-              {config.role}
+          <div className="flex items-center space-x-3">
+            <div className="text-right">
+              <div
+                className={`text-lg font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}
+              >
+                {config.role}
+              </div>
+              <p className="text-zinc-400 text-sm">Agent Role</p>
             </div>
-            <p className="text-zinc-400 text-sm">Agent Role</p>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className={`p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 group/btn`}
+              title="Agent Settings"
+            >
+              <span className="text-zinc-400 group-hover/btn:text-white transition-colors">
+                ⚙️
+              </span>
+            </button>
           </div>
         </div>
 
@@ -169,6 +182,15 @@ function AgentLog({ agent }: AgentLogProps) {
           )}
         </div>
       </div>
+
+      {/* Agent Settings Modal */}
+      <AgentSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        agent={agent}
+        agentName={`Agent ${agent}`}
+        agentRole={config.role}
+      />
     </div>
   );
 }
