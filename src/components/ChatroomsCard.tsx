@@ -4,6 +4,7 @@ import chatroomsData from "../data/chatroom.json";
 import { chatroomService, ExtendedChatroom } from "../services/chatroomService";
 import ChatroomDataPoster from "./ChatroomDataPoster";
 import { AGENT_CONFIG, useAgentTokens } from "./UserInfoCard";
+import AgentActivityMonitor from "./AgentActivityMonitor";
 
 interface Chatroom {
   id: string;
@@ -135,6 +136,10 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
   const [joiningRoom, setJoiningRoom] = useState<string | null>(null);
   const [leavingRoom, setLeavingRoom] = useState<string | null>(null);
   const [posterData, setPosterData] = useState<{
+    processId: string;
+    title: string;
+  } | null>(null);
+  const [activityMonitorData, setActivityMonitorData] = useState<{
     processId: string;
     title: string;
   } | null>(null);
@@ -721,7 +726,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                         </div>
                       )}
 
-                      {/* Post Data button for real chatrooms - show for all joined rooms */}
+                      {/* Agent Activity Monitor button for real chatrooms - show for all joined rooms */}
                       {room.isReal &&
                         room.processId &&
                         isConnected &&
@@ -729,13 +734,13 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                           <button
                             className="w-full px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-zinc-300 text-sm font-medium transition-colors"
                             onClick={() =>
-                              setPosterData({
+                              setActivityMonitorData({
                                 processId: room.processId!,
                                 title: room.title,
                               })
                             }
                           >
-                            📤 Post Data
+                            🔍 Agent Activity Monitor
                           </button>
                         )}
                     </div>
@@ -774,6 +779,15 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
           processId={posterData.processId}
           chatroomTitle={posterData.title}
           onClose={() => setPosterData(null)}
+        />
+      )}
+
+      {/* Agent Activity Monitor Modal */}
+      {activityMonitorData && (
+        <AgentActivityMonitor
+          processId={activityMonitorData.processId}
+          chatroomTitle={activityMonitorData.title}
+          onClose={() => setActivityMonitorData(null)}
         />
       )}
     </div>
