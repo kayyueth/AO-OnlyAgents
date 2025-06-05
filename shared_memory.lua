@@ -365,6 +365,34 @@ Handlers.add(
     end
 )
 
+-- Handler for checking agent membership
+Handlers.add(
+    "CheckMembership",
+    { Action = "CheckMembership" },
+    function(msg)
+        local agentId = msg.Tags.AgentId or msg.From
+        
+        if not agentId then
+            msg.reply({
+                Action = "MembershipStatus",
+                Data = "No agent ID provided",
+                Status = "Error"
+            })
+            return
+        end
+        
+        local isMember = Members[agentId] and Members[agentId].active
+        
+        msg.reply({
+            Action = "MembershipStatus", 
+            Data = isMember and "Member" or "Not a member",
+            Status = isMember and "Member" or "NotMember",
+            AgentId = agentId,
+            IsMember = isMember and "true" or "false"
+        })
+    end
+)
+
 
 
 

@@ -179,7 +179,9 @@ function App() {
         port: 443,
         protocol: "https",
       }}
-      appInfo={{ name: "AI Memory Hub" }}
+      appInfo={{ 
+        name: "OnlyAgents"
+      }}
       muUrl="https://mu.ao-testnet.xyz"
     >
       <AgentTokenProvider>

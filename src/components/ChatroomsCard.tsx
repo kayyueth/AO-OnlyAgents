@@ -4,7 +4,9 @@ import chatroomsData from "../data/chatroom.json";
 import { chatroomService, ExtendedChatroom } from "../services/chatroomService";
 import ChatroomDataPoster from "./ChatroomDataPoster";
 import { AGENT_CONFIG, useAgentTokens } from "./UserInfoCard";
+import { getUserAgentProcessIds, isUserProcess } from "../config/userConfig";
 import AgentActivityMonitor from "./AgentActivityMonitor";
+import RealTimeDataMonitor from "./RealTimeDataMonitor";
 
 interface Chatroom {
   id: string;
@@ -143,6 +145,10 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
     processId: string;
     title: string;
   } | null>(null);
+  const [realTimeMonitorData, setRealTimeMonitorData] = useState<{
+    processId: string;
+    title: string;
+  } | null>(null);
   const [lastConnectedState, setLastConnectedState] = useState<boolean>(false);
   const [joinedChatroomIds, setJoinedChatroomIds] = useState<string[]>([]);
 
@@ -155,10 +161,7 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
 
   // Get user's agent process IDs from shared config (memoized to prevent re-renders)
   const userAgentProcessIds = useMemo(
-    () => [
-      AGENT_CONFIG.A.processId, // Trading Agent Alpha
-      AGENT_CONFIG.B.processId, // Data Agent Beta (user's process)
-    ],
+    () => getUserAgentProcessIds(),
     []
   );
 
@@ -176,77 +179,38 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
           chatroomService.setWallet(walletContext);
         }
 
-        // Add timeout to prevent infinite loading
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(
-            () =>
-              reject(new Error("Loading timeout - falling back to mock data")),
-            8000
-          ); // 8 second timeout
-        });
-
-        const loadingPromise = (async () => {
-          console.log("🔄 Starting chatroom data loading...");
-
-          // Check which chatrooms the user's agents have joined
-          const allJoinedChatrooms: string[] = [];
-          for (const agentProcessId of userAgentProcessIds) {
-            if (!isMounted) return;
-
-            try {
-              console.log(
-                `🔍 Checking chatrooms for agent: ${agentProcessId.slice(
-                  0,
-                  8
-                )}...`
-              );
-              const joinedRooms = await chatroomService.getJoinedChatrooms(
-                agentProcessId
-              );
-              allJoinedChatrooms.push(...joinedRooms);
-            } catch (error) {
-              console.error(
-                `Error checking joined chatrooms for agent ${agentProcessId}:`,
-                error
-              );
-            }
-          }
-
-          if (!isMounted) return;
-
-          // Remove duplicates
-          const uniqueJoinedChatrooms = [...new Set(allJoinedChatrooms)];
-          setJoinedChatroomIds(uniqueJoinedChatrooms);
+        // 只在连接状态真正改变时重新加载
+        if (isConnected !== lastConnectedState) {
           console.log(
-            `🔗 User agents are members of ${uniqueJoinedChatrooms.length} chatrooms:`,
-            uniqueJoinedChatrooms
+            `🚀 Connection state changed: ${lastConnectedState} → ${isConnected}`
           );
 
-          // Enhance mock data with real AO data
-          console.log("📊 Loading chatroom details...");
-          const mockChatrooms = chatroomsData as Chatroom[];
-          const enhancedChatrooms =
-            await chatroomService.enhanceChatroomsWithRealData(mockChatrooms);
+          if (isConnected) {
+            // 钱包连接时，先加载基础数据，暂时跳过AO调用
+            console.log("🔄 Loading basic chatroom data (skipping AO calls)...");
+            
+            // 直接使用mock数据，避免网络调用失败
+            const mockChatrooms = chatroomsData as Chatroom[];
+            const enhancedChatrooms = mockChatrooms.map(room => ({
+              ...room,
+              processId: room.id === "trading-alpha" ? "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY" : undefined,
+              isReal: room.id === "trading-alpha",
+            })) as ExtendedChatroom[];
 
-          if (!isMounted) return;
-
-          setChatrooms(enhancedChatrooms);
-          setLastConnectedState(isConnected);
-          console.log("✅ Chatroom loading completed successfully");
-        })();
-
-        // Race between loading and timeout
-        try {
-          await Promise.race([loadingPromise, timeoutPromise]);
-        } catch (timeoutError) {
-          console.warn(
-            "⏰ Loading timed out, using fallback data:",
-            timeoutError
-          );
-          if (isMounted) {
-            // Use mock data as fallback
-            setChatrooms(chatroomsData as ExtendedChatroom[]);
-            setLastConnectedState(isConnected);
+            if (isMounted) {
+              setChatrooms(enhancedChatrooms);
+              setJoinedChatroomIds([]); // 先设为空，避免AO调用
+              setLastConnectedState(isConnected);
+              console.log("✅ Basic chatroom data loaded successfully");
+            }
+          } else {
+            // 钱包断开时，使用纯mock数据
+            if (isMounted) {
+              setChatrooms(chatroomsData as ExtendedChatroom[]);
+              setJoinedChatroomIds([]);
+              setLastConnectedState(isConnected);
+              console.log("📤 Wallet disconnected, using mock data");
+            }
           }
         }
       } catch (error) {
@@ -263,16 +227,13 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
       }
     };
 
-    console.log(
-      `🚀 Loading chatrooms - isConnected: ${isConnected}, lastConnectedState: ${lastConnectedState}`
-    );
     loadChatrooms();
 
     // Cleanup function
     return () => {
       isMounted = false;
     };
-  }, [isConnected]); // Only depend on connection state
+  }, [isConnected]); // ✅ 只依赖 isConnected，移除其他依赖
 
   const handleJoinChatroomClick = (room: ExtendedChatroom) => {
     if (!room.processId) {
@@ -433,6 +394,10 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
   };
 
   const isAlreadyJoined = (room: ExtendedChatroom) => {
+    // Only show joined status if wallet is connected
+    if (!isConnected) {
+      return false;
+    }
     return Boolean(
       room.processId && joinedChatroomIds.includes(room.processId)
     );
@@ -609,20 +574,13 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                     {room.isReal && room.realData && (
                       <div className="mt-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
                         <div className="text-xs text-green-300 font-medium">
-                          📊 Real AO Data: {room.realData.dataCount} messages,{" "}
+                          📊 AO Data: {room.realData.dataCount} messages,{" "}
                           {room.realData.memberCount} members
                         </div>
                         {room.messages && room.messages.length > 0 && (
                           <div className="text-xs text-green-400 mt-1">
                             Latest: {room.messages[0].dataType} from{" "}
                             {room.messages[0].sender.slice(0, 8)}...
-                          </div>
-                        )}
-                        {/* Show process ID for user's specific chatroom */}
-                        {room.processId ===
-                          "vyd3NOTV75D3ZEJ1bEpmbAKDuZ56GwnfeTsesK2uUtY" && (
-                          <div className="text-xs text-blue-300 mt-1 font-mono break-all">
-                            YOUR PROCESS: {room.processId}
                           </div>
                         )}
                       </div>
@@ -731,17 +689,31 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
                         room.processId &&
                         isConnected &&
                         isJoined && (
-                          <button
-                            className="w-full px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-zinc-300 text-sm font-medium transition-colors"
-                            onClick={() =>
-                              setActivityMonitorData({
-                                processId: room.processId!,
-                                title: room.title,
-                              })
-                            }
-                          >
-                            🔍 Agent Activity Monitor
-                          </button>
+                          <div className="space-y-2">
+                            <button
+                              className="w-full px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-zinc-300 text-sm font-medium transition-colors"
+                              onClick={() =>
+                                setActivityMonitorData({
+                                  processId: room.processId!,
+                                  title: room.title,
+                                })
+                              }
+                            >
+                              🔍 Agent Activity Monitor
+                            </button>
+                            
+                            <button
+                              className="w-full px-4 py-2 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 rounded-lg text-blue-300 text-sm font-medium transition-colors"
+                              onClick={() =>
+                                setRealTimeMonitorData({
+                                  processId: room.processId!,
+                                  title: room.title,
+                                })
+                              }
+                            >
+                              📡 Real-Time Data Monitor
+                            </button>
+                          </div>
                         )}
                     </div>
                   )}
@@ -788,6 +760,15 @@ function ChatroomsCard({ className = "" }: ChatroomsCardProps) {
           processId={activityMonitorData.processId}
           chatroomTitle={activityMonitorData.title}
           onClose={() => setActivityMonitorData(null)}
+        />
+      )}
+
+      {/* Real-Time Data Monitor Modal */}
+      {realTimeMonitorData && (
+        <RealTimeDataMonitor
+          processId={realTimeMonitorData.processId}
+          chatroomTitle={realTimeMonitorData.title}
+          onClose={() => setRealTimeMonitorData(null)}
         />
       )}
     </div>

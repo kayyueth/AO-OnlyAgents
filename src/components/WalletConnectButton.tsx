@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useWallet } from "@vela-ventures/aosync-sdk-react";
 
 interface WalletConnectButtonProps {
@@ -11,43 +11,69 @@ function WalletConnectButton({ className = "" }: WalletConnectButtonProps) {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const handleConnect = useCallback(async () => {
-    if (isConnecting) return;
+  // 监听钱包状态变化
+  useEffect(() => {
+    console.log(`🔍 Wallet state changed: isConnected = ${isConnected}`);
+  }, [isConnected]);
 
+  // 监听连接状态变化
+  useEffect(() => {
+    console.log(`🔄 Connection state: isConnecting = ${isConnecting}, isDisconnecting = ${isDisconnecting}`);
+  }, [isConnecting, isDisconnecting]);
+
+  const handleConnect = useCallback(async () => {
+    if (isConnecting) {
+      console.log('🔄 Already connecting, ignoring request');
+      return;
+    }
+
+    console.log('🚀 Starting wallet connection...');
     setIsConnecting(true);
     setLastError(null);
 
     try {
       await connect();
+      console.log('✅ Wallet connected successfully');
       setLastError(null);
     } catch (error) {
-      console.error("Failed to connect wallet:", error);
+      console.error("❌ Failed to connect wallet:", error);
 
       // Only show error if it's not user cancellation
       if (
         error instanceof Error &&
         !error.message.includes("User rejected") &&
-        !error.message.includes("cancelled")
+        !error.message.includes("cancelled") &&
+        !error.message.includes("canceled")
       ) {
+        console.error("💥 Connection error details:", error);
         setLastError("Connection failed. Please try again.");
+      } else {
+        console.log('👤 User cancelled connection');
       }
     } finally {
       setIsConnecting(false);
+      console.log('🏁 Connection attempt finished');
     }
   }, [connect, isConnecting]);
 
   const handleDisconnect = useCallback(async () => {
-    if (isDisconnecting) return;
+    if (isDisconnecting) {
+      console.log('🔄 Already disconnecting, ignoring request');
+      return;
+    }
 
+    console.log('🔌 Starting wallet disconnection...');
     setIsDisconnecting(true);
     try {
       await disconnect();
+      console.log('✅ Wallet disconnected successfully');
       setLastError(null);
     } catch (error) {
-      console.error("Failed to disconnect wallet:", error);
+      console.error("❌ Failed to disconnect wallet:", error);
       setLastError("Disconnection failed. Please try again.");
     } finally {
       setIsDisconnecting(false);
+      console.log('🏁 Disconnection attempt finished');
     }
   }, [disconnect, isDisconnecting]);
 
